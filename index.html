@@ -1,0 +1,50 @@
+<htmll>
+    <head>
+        <title>DNP3 Decoder</title>
+        <style>
+            h1{
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>DNP3 Decoder</h1>
+        <div id="input">
+            <h2>Input</h2>
+            <label>Input</label>
+            <br>
+            <textarea id="input_box" oninput="main(cleanInput(this.value))"></textarea>
+        </div>
+        <div id="output-data-link">
+            <h2>Data Link</h2>
+            <label>Start: </label><input type="text" readonly id="start">
+            <label>Length: </label><input type="text" readonly id="len">
+            <br>
+            <label>Direction: </label><input type="text" readonly id="direction">
+            <label>Primary Message:</label><input type="text" readonly id="prm">
+            <label>Link Function Code: </label><input type="text" readonly id="link_function_code">
+            <label>Control: </label><input type="text" readonly id="control">
+            <br>
+            <label>Destination: </label><input type="text" readonly id="destination">
+            <label>Source: </label><input type="text" readonly id="source">
+            <br>
+            <label>CRC: </label><input type="text" readonly id="crc">
+        </div>
+        <div id="output-application-header">
+            <h2>Applicaiton Header</h2>
+            <label>Application Control: </label><input type="text" readonly id="application_control">
+            <label>Application Function Code: </label><input type="text" readonly id="app_function_code">
+            <label>Internal Indication (LSB): </label><input type="text" readonly id="internal_indications_lsb">
+            <label>Internal Indication (MSB): </label><input type="text" readonly id="internal_indications_msb">
+        </div>
+        <div id="output-first-object-header">
+            <h2>Object Header</h2>
+            <label>Group: </label><input type="text" readonly id="group">
+            <label>Variation: </label><input type="text" readonly id="variation">
+            <label>Qualifier: </label><input type="text" readonly id="qualifier">
+            <label>Range: </label><input type="text" readonly id="range">
+
+        </div>
+        <script src="app.js"></script>
+    </body>
+</htmll>
