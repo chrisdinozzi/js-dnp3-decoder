@@ -135,17 +135,25 @@ function getLinkFunctionCode(input){
 
 }
 
-
 function getDestination(input){
-
+    console.log("Destination: "+input)
+    //swap bytes around
+    input = input.substring(2) +input.substring(0,2)
+    return Number("0x"+input)
 }
 
 function getSource(input){
-
+    console.log("Source: "+input)
+    //swap bytes around
+    input = input.substring(2) +input.substring(0,2)
+    return Number("0x"+input)
 }
 
 function getCRC(input){
-
+    console.log("CRC: "+input)
+    //swap bytes around
+    input = input.substring(2) +input.substring(0,2)
+    return "0x"+input
 }
 
 function handleDataLinkLayer(input){
@@ -153,6 +161,9 @@ function handleDataLinkLayer(input){
     var start = input.substring(0,4)
     var length = input.substring(4,6)
     var control = input.substring(6,8)
+    var destination = input.substring(8,12)
+    var source = input.substring(12,16)
+    var crc = input.substring(16,20)
     console.log("Data Link Layer: "+input)
     
     setOutput("start",getStart(start))
@@ -160,6 +171,9 @@ function handleDataLinkLayer(input){
     setOutput("direction",getDirection(control))
     setOutput("prm",getPrimaryMessage(control))
     setOutput("link_function_code",getLinkFunctionCode(control))
+    setOutput("destination",getDestination(destination))
+    setOutput("source",getSource(source))
+    setOutput("crc",getCRC(crc))
 }
 
 function main(input){
