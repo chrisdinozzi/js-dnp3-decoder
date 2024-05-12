@@ -17,6 +17,8 @@
         </div>
         <div id="output-data-link">
             <h2>Data Link</h2>
+            <label>Data</label><input type="text" readonly id="data-link-data">
+            <br>
             <label>Start: </label><input type="text" readonly id="start">
             <label>Length: </label><input type="text" readonly id="length">
             <br>
@@ -29,8 +31,18 @@
             <br>
             <label>CRC: </label><input type="text" readonly id="crc">
         </div>
+        <div id="output-transport-layer">
+            <h2>Transport Layer</h2>
+            <label>Data</label><input type="text" readonly id="transport-layer-data">
+            <br>
+            <label>FIN: </label><input type="text" readonly id="fin">
+            <label>FIR: </label><input type="text" readonly id="fir">
+            <label>Sequence: </label><input type="text" readonly id="seq">
+        </div>
         <div id="output-application-header">
             <h2>Applicaiton Header</h2>
+            <label>Data</label><input type="text" readonly id="application-header-data">
+            <br>
             <label>Application Control: </label><input type="text" readonly id="application_control">
             <label>Application Function Code: </label><input type="text" readonly id="app_function_code">
             <label>Internal Indication (LSB): </label><input type="text" readonly id="internal_indications_lsb">
