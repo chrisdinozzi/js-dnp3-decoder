@@ -173,7 +173,10 @@ function getFIR(input){
 
 function getSeq(input){
     as_int = Number("0x"+input)
-    return as_int<<2
+    console.log(as_int)
+    bits = (as_int & 0x1f)
+    console.log(bits)
+    return bits
 }
 
 function handleTransportLayer(input){
@@ -188,10 +191,145 @@ function handleTransportLayer(input){
 ///////////////////////
 //APPLICATION HEADER//
 //////////////////////
+function getApplicationControl(input){
+    console.log("Application Control: "+input)
+}
+
+function getAppFunctionCode(input){
+    console.log("Function Code: "+input)
+    switch (input) {
+        case "00":
+            return "CONFIRM"
+            break
+        case "01":
+            return "READ"
+            break
+        case "02":
+            return "WRITE"
+            break
+        case "03":
+            return "SELECT"
+            break
+        case "04":
+            return "OPERATE"
+            break
+        case "05":
+            return "DIRECT_OPERATE"
+            break
+        case "06":
+            return "DIRECT_OPERATE_NR"
+            break
+        case "07":
+            return "IMMED_FREEZE"
+            break
+        case "08":
+            return "IMMED_FREEZE_NR"
+            break
+        case "09":
+            return "FREEZE_CLEAR"
+            break
+        case "0A":
+            return "FREEZE_CLEAR_NR"
+            break
+        case "0B":
+            return "FREEZE_AT_TIME"
+            break
+        case "0C":
+            return "FREEZE_AT_TIME_NR"
+            break
+        case "0D":
+            return "COLD_RESTART"
+            break
+        case "0E":
+            return "WARM_RESTART"
+            break
+        case "0F":
+            return "INITIALIZE_DATA"
+            break
+        case "10":
+            return "INITIALIZE_APPL"
+            break
+        case "11":
+            return "START_APPL"
+            break
+        case "12":
+            return "STOP_APPL"
+            break
+        case "13":
+            return "SAVE_CONFIG"
+            break
+        case "14":
+            return "ENABLE_UNSOLICITED"
+            break
+        case "15":
+            return "DISABLE_UNSOLICITED"
+            break
+        case "16":
+            return "ASSIGN_CLASS"
+            break
+        case "17":
+            return "DELAY_MEASURE"
+            break
+        case "18":
+            return "RECORD_CURRENT_TIME"
+            break
+        case "19":
+            return "OPEN_FILE"
+            break
+        case "1a":
+            return "CLOSE_FILE"
+            break
+        case "1b":
+            return "DELETE_FILE"
+            break
+        case "1c":
+            return "GET_FILE_INFO"
+            break
+        case "1d":
+            return "AUTHENTICATE_FILE"
+            break
+        case "1e":
+            return "ABORT_FILE"
+            break
+        case "1f":
+            return "ACTIVATE_CONFIG"
+            break
+        case "20":
+            return "AUTHENTICATE_REQ"
+            break
+        case "21":
+            return "AUTH_REQ_NO_ACK"
+            break
+        case "81":
+            return "RESPONSE"
+            break
+        case "82":
+            return "UNSOLICITED_RESPONSE"
+            break
+        case "83":
+            return "AUTHENTICATE_RESP"
+            break
+    }
+}
+
+function getLSBIIN(input){
+    console.log("LSB IIN: "+input)
+}
+
+function getMSBIIN(input){
+    console.log("MSB IIN: "+input)
+}
+
 function handleApplicationHeader(input){
     //056414F3010000040A3BC0 C3 01 3C 02 06 3C 03 06 3C 04 06 3C 01 06 9A 12
     setOutput("application-header-data",input)
-    console.log("Application Header: "+ input)
+    setOutput("application_control",getApplicationControl(input.substring(0,2)))
+    setOutput("app_function_code",getAppFunctionCode(input.substring(2,4)))
+    console.log("Length: "+input.length)
+    if (input.length == 8){
+        setOutput("internal_indications_lsb",getLSBIIN(4,6))
+        setOutput("internal_indications_msb",getMSBIIN(6,8))
+    }
 }
 
 function main(input){
@@ -202,5 +340,12 @@ function main(input){
 
     handleDataLinkLayer(input.substring(0,20))
     handleTransportLayer(input.substring(20,22))
-    handleApplicationHeader(input.substring(22,28))
+    
+    if ((Number("0x"+input.substring(6,8))>>7 & 0x1) == 1){
+        console.log("marco")
+        handleApplicationHeader(input.substring(22,26))
+    } else{
+        console.log("polo")
+        handleApplicationHeader(input.substring(22,30)) //Internal Indications only included in responses from outstation.
+    }
 }
