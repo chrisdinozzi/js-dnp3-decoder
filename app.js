@@ -1,6 +1,7 @@
 //https://cdn.chipkin.com/assets/uploads/imports/resources/DNP3QuickReference.pdf
 //https://www.racom.eu/eng/support/prot/dnp3/index.html
 //https://www.winccoa.com/documentation/WinCCOA/latest/en_US/Treiber_DNP3/dnp3_application_layer.html
+//https://www.researchgate.net/figure/DNP3-message-architecture_fig1_308143053
 
 function cleanInput(i){
     return i.replaceAll(" ","").replaceAll("\n","").replaceAll("0x","").toLowerCase()
