@@ -194,6 +194,15 @@ function handleTransportLayer(input){
 //////////////////////
 function getApplicationControl(input){
     console.log("Application Control: "+input)
+    as_int = Number("0x"+input)
+    console.log("Application Control (int): "+as_int)
+
+    setOutput("application_control_fir",(as_int & 128) == 128 ? 1 : 0)
+    setOutput("application_control_fin",(as_int & 64) == 64 ? 1 : 0)
+    setOutput("application_control_con",(as_int & 32) == 32 ? 1 : 0)
+    setOutput("application_control_uns",(as_int & 16) == 16 ? 1 : 0)
+    setOutput("application_control_seq",as_int & 15)
+    return "0x"+input
 }
 
 function getAppFunctionCode(input){
