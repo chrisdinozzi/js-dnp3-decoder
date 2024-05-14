@@ -20,6 +20,20 @@ function setOutput(id,value){
     }
 }
 
+function setCheckbox(id,value){
+    if (document.getElementById(id)==null){
+        return "ID not found."
+    } 
+    console.log("Setting: "+id+" to: "+value)
+    if (value==1){
+        document.getElementById(id).checked = true;
+        return
+    } else if (value==0){
+        document.getElementById(id).checked = false;
+        return
+    }
+}
+
 ///////////////////
 //DATA LINK LAYER//
 ///////////////////
@@ -324,10 +338,30 @@ function getAppFunctionCode(input){
 
 function getLSBIIN(input){
     console.log("LSB IIN: "+input)
+    as_int = Number("0x"+input);
+    (as_int&128) == 128 ? setCheckbox("iin_lsb_device_restart",1) : setCheckbox("iin_lsb_device_restart",0);
+    (as_int&64) == 64 ? setCheckbox("iin_lsb_device_trouble",1) : setCheckbox("iin_lsb_device_trouble",0);
+    (as_int&32) == 32 ? setCheckbox("iin_lsb_local_control",1) : setCheckbox("iin_lsb_local_control",0);
+    (as_int&16) == 16 ? setCheckbox("iin_lsb_need_time",1) : setCheckbox("iin_lsb_need_time",0);
+    (as_int&8) == 8 ? setCheckbox("iin_lsb_class3",1) : setCheckbox("iin_lsb_class3",0);
+    (as_int&4) == 4 ? setCheckbox("iin_lsb_class2",1) : setCheckbox("iin_lsb_class2",0);
+    (as_int&2) == 2 ? setCheckbox("iin_lsb_class1",1) : setCheckbox("iin_lsb_class1",0);
+    (as_int&1) == 1 ? setCheckbox("iin_lsb_all_stations",1) : setCheckbox("iin_lsb_all_stations",0);
+    return "0x"+input
 }
 
 function getMSBIIN(input){
     console.log("MSB IIN: "+input)
+    as_int = Number("0x"+input);
+    (as_int&128) == 128 ? setCheckbox("iin_msb_reserved2",1) : setCheckbox("iin_msb_reserved2",0);
+    (as_int&64) == 64 ? setCheckbox("iin_msb_reserved1",1) : setCheckbox("iin_msb_reserved1",0);
+    (as_int&32) == 32 ? setCheckbox("iin_msb_configuration_corrupt",1) : setCheckbox("iin_msb_configuration_corrupt",0);
+    (as_int&16) == 16 ? setCheckbox("iin_msb_already_executing",1) : setCheckbox("iin_msb_already_executing",0);
+    (as_int&8) == 8 ? setCheckbox("iin_msb_event_buffer_overflow",1) : setCheckbox("iin_msb_event_buffer_overflow",0);
+    (as_int&4) == 4 ? setCheckbox("iin_msb_parameter_error",1) : setCheckbox("iin_msb_parameter_error",0);
+    (as_int&2) == 2 ? setCheckbox("iin_msb_object_unknown",1) : setCheckbox("iin_msb_object_unknown",0);
+    (as_int&1) == 1 ? setCheckbox("iin_msb_function_code_not_supported",1) : setCheckbox("iin_msb_function_code_not_supported",0);
+    return "0x"+input
 }
 
 function handleApplicationHeader(input){
@@ -337,8 +371,8 @@ function handleApplicationHeader(input){
     setOutput("app_function_code",getAppFunctionCode(input.substring(2,4)))
     console.log("Length: "+input.length)
     if (input.length == 8){
-        setOutput("internal_indications_lsb",getLSBIIN(4,6))
-        setOutput("internal_indications_msb",getMSBIIN(6,8))
+        setOutput("internal_indications_lsb",getLSBIIN(input.substring(4,6)))
+        setOutput("internal_indications_msb",getMSBIIN(input.substring(6,8)))
     }
 }
 

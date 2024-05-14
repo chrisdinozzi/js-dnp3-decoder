@@ -51,8 +51,26 @@
             <label>SEQ: </label><input type="text" readonly id="application_control_seq">
             <br>
             <label>Application Function Code: </label><input type="text" readonly id="app_function_code">
-            <label>Internal Indication (LSB): </label><input type="text" readonly id="internal_indications_lsb">
-            <label>Internal Indication (MSB): </label><input type="text" readonly id="internal_indications_msb">
+            <br>
+            <label>Internal Indication (LSB): </label><input type="text" disabled id="internal_indications_lsb">
+            <br><label>All Stations</label><input type="checkbox" disabled id = "iin_lsb_all_stations">
+            <br><label>Class 1</label><input type="checkbox" disabled id = "iin_lsb_class1">
+            <br><label>Class 2</label><input type="checkbox" disabled id = "iin_lsb_class2">
+            <br><label>Class 3</label><input type="checkbox" disabled  id = "iin_lsb_class3">
+            <br><label>Need Time</label><input type="checkbox" disabled id = "iin_lsb_need_time">
+            <br><label>Local Control</label><input type="checkbox" disabled id = "iin_lsb_local_control">
+            <br><label>Device Trouble</label><input type="checkbox" disabled id = "iin_lsb_device_trouble">
+            <br><label>Device Restart</label><input type="checkbox" disabled id = "iin_lsb_device_restart">
+
+            <br><br><label>Internal Indication (MSB): </label><input type="text" disabled id="internal_indications_msb">
+            <br><label>Function code not supported</label><input type="checkbox" disabled id="iin_msb_function_code_not_supported">
+            <br><label>Object Unknown</label><input type="checkbox" disabled id="iin_msb_object_unknown">
+            <br><label>Parameter Error</label><input type="checkbox" disabled id="iin_msb_parameter_error">
+            <br><label>Event Buffer Overflow</label><input type="checkbox" disabled id="iin_msb_event_buffer_overflow">
+            <br><label>Already Executing</label><input type="checkbox" disabled id="iin_msb_already_executing">
+            <br><label>Configuration Corrupt</label><input type="checkbox" disabled id="iin_msb_configuration_corrupt">
+            <br><label>Reserved 1</label><input type="checkbox" disabled id="iin_msb_reserved1">
+            <br><label>Reserved 2</label><input type="checkbox" disabled id="iin_msb_reserved2">
         </div>
         <div id="output-first-object-header">
             <h2>Object Header</h2>
