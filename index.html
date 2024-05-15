@@ -72,13 +72,16 @@
             <br><label>Reserved 1</label><input type="checkbox" disabled id="iin_msb_reserved1">
             <br><label>Reserved 2</label><input type="checkbox" disabled id="iin_msb_reserved2">
         </div>
-        <div id="output-first-object-header">
-            <h2>Object Header</h2>
-            <label>Group: </label><input type="text" readonly id="group">
-            <label>Variation: </label><input type="text" readonly id="variation">
-            <label>Qualifier: </label><input type="text" readonly id="qualifier">
-            <label>Range: </label><input type="text" readonly id="range">
+        <div id="output-objects">
+            <div id="output-object-0">
+                <h2>Object Header 0</h2>
+                <label>Data: </label><input type="text" readyonly id="object-data"><br>
+                <label>Group: </label><input type="text" readonly id="group">
+                <label>Variation: </label><input type="text" readonly id="variation">
+                <label>Qualifier: </label><input type="text" readonly id="qualifier">
+                <label>Range: </label><input type="text" readonly id="range">
 
+            </div>
         </div>
         <script src="app.js"></script>
     </body>

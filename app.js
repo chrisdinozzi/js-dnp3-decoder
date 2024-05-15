@@ -24,7 +24,7 @@ function setCheckbox(id,value){
     if (document.getElementById(id)==null){
         return "ID not found."
     } 
-    console.log("Setting: "+id+" to: "+value)
+    //console.log("Setting: "+id+" to: "+value)
     if (value==1){
         document.getElementById(id).checked = true;
         return
@@ -188,9 +188,9 @@ function getFIR(input){
 
 function getSeq(input){
     as_int = Number("0x"+input)
-    console.log(as_int)
+    //console.log(as_int)
     bits = (as_int & 0x1f)
-    console.log(bits)
+    //console.log(bits)
     return bits
 }
 
@@ -207,9 +207,9 @@ function handleTransportLayer(input){
 //APPLICATION HEADER//
 //////////////////////
 function getApplicationControl(input){
-    console.log("Application Control: "+input)
+    //console.log("Application Control: "+input)
     as_int = Number("0x"+input)
-    console.log("Application Control (int): "+as_int)
+    //console.log("Application Control (int): "+as_int)
 
     setOutput("application_control_fir",(as_int & 128) == 128 ? 1 : 0)
     setOutput("application_control_fin",(as_int & 64) == 64 ? 1 : 0)
@@ -220,7 +220,7 @@ function getApplicationControl(input){
 }
 
 function getAppFunctionCode(input){
-    console.log("Function Code: "+input)
+    //console.log("Function Code: "+input)
     switch (input) {
         case "00":
             return "CONFIRM"
@@ -337,7 +337,7 @@ function getAppFunctionCode(input){
 }
 
 function getLSBIIN(input){
-    console.log("LSB IIN: "+input)
+    //console.log("LSB IIN: "+input)
     as_int = Number("0x"+input);
     (as_int&128) == 128 ? setCheckbox("iin_lsb_device_restart",1) : setCheckbox("iin_lsb_device_restart",0);
     (as_int&64) == 64 ? setCheckbox("iin_lsb_device_trouble",1) : setCheckbox("iin_lsb_device_trouble",0);
@@ -351,7 +351,7 @@ function getLSBIIN(input){
 }
 
 function getMSBIIN(input){
-    console.log("MSB IIN: "+input)
+    //console.log("MSB IIN: "+input)
     as_int = Number("0x"+input);
     (as_int&128) == 128 ? setCheckbox("iin_msb_reserved2",1) : setCheckbox("iin_msb_reserved2",0);
     (as_int&64) == 64 ? setCheckbox("iin_msb_reserved1",1) : setCheckbox("iin_msb_reserved1",0);
@@ -369,11 +369,43 @@ function handleApplicationHeader(input){
     setOutput("application-header-data",input)
     setOutput("application_control",getApplicationControl(input.substring(0,2)))
     setOutput("app_function_code",getAppFunctionCode(input.substring(2,4)))
-    console.log("Length: "+input.length)
+    //console.log("Length: "+input.length)
     if (input.length == 8){
         setOutput("internal_indications_lsb",getLSBIIN(input.substring(4,6)))
         setOutput("internal_indications_msb",getMSBIIN(input.substring(6,8)))
     }
+}
+
+///////////////////////////////
+//APPLICATION OBJECT HEADERS//
+//////////////////////////////
+
+//example code
+//full message = 056453730004010003FCC1E38196000201280100000001020128052401000100010201280100020001020128B47701000300012002280100000001000020A525022801000100010000010101000003002FAC001E02010000010001000001000016ED
+//objects = 0201280100000001020128052401000100010201280100020001020128b47701000300012002280100000001000020a525022801000100010000010101000003002fac001e02010000010001000001000016ed
+//object 1 = 02012801000000010201280524010001
+function handleApplicationObjects(input){
+    console.log("Application Objects: "+input)
+    let objects=[]
+    const node = document.getElementById("output-object-0").childNodes
+    const clone = node.cloneNode(true)
+    console.log(node)
+    if (input.length > 18){
+        //multiple objects, break them down
+        let counter=1
+        objects = input.match(/.{1,18}/g)
+        console.log(objects)
+        objects.array.forEach(object => {
+            let id = "output-object-"+counter
+            let output_fields = document.createElement("div")
+            output_fields.setAttribute("id",id)
+            document.getElementById("output-objects").appendChild(output_fields)
+            output_fields.children[0].value = "Output Object "+counter
+        });
+    }
+    
+    
+
 }
 
 function main(input){
@@ -384,12 +416,16 @@ function main(input){
 
     handleDataLinkLayer(input.substring(0,20))
     handleTransportLayer(input.substring(20,22))
-    
+    var objects=""
     if ((Number("0x"+input.substring(6,8))>>7 & 0x1) == 1){
         console.log("marco")
         handleApplicationHeader(input.substring(22,26))
+        objects=input.substring(26)
     } else{
         console.log("polo")
         handleApplicationHeader(input.substring(22,30)) //Internal Indications only included in responses from outstation.
+        objects=input.substring(30)
     }
+
+    handleApplicationObjects(objects)
 }
