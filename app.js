@@ -384,27 +384,324 @@ function handleApplicationHeader(input){
 //full message = 056453730004010003FCC1E38196000201280100000001020128052401000100010201280100020001020128B47701000300012002280100000001000020A525022801000100010000010101000003002FAC001E02010000010001000001000016ED
 //objects = 0201280100000001020128052401000100010201280100020001020128b47701000300012002280100000001000020a525022801000100010000010101000003002fac001e02010000010001000001000016ed
 //object 1 = 02012801000000010201280524010001
+
+// group                            1 byte
+// variation                        2 byte
+// qualifier                        3 byte
+// range (or number of items)       4 byte
+
+
+// value (?)                        5 byte
+// index (?)                        6+7 byte (swapped around!)
+// quality (?)                      8 byte
+function calculateQualifier(qualifier){
+    let as_int = Number("0x"+qualifier)
+    let range_specifier = as_int & 0x0F
+    let range_specifier_resolved = ""
+    switch (range_specifier){
+        case 0:
+            range_specifier_resolved = "1-octet start - stop indexes."
+            break
+        case 1:
+            range_specifier_resolved = "2-octet start – stop indexes."
+            break
+        case 2:
+            range_specifier_resolved = "4-octet start – stop indexes."
+            break
+        case 3:
+            range_specifier_resolved = "1-octet start – stop virtual addresses."
+            break
+        case 4:
+            range_specifier_resolved = "2-octet start – stop virtual addresses."
+            break
+        case 5:
+            range_specifier_resolved = "4-octet start – stop virtual addresses."
+            break
+        case 6:
+            range_specifier_resolved = "No range field used. Implies all objects."
+            break
+        case 7:
+            range_specifier_resolved = "1-octet count of objects."
+            break
+        case 8:
+            range_specifier_resolved = "2-octet count of objects."
+            break
+        case 9:
+            range_specifier_resolved = "4-octet count of objects."
+            break
+        case 10:
+            range_specifier_resolved = "Reserved."
+            break
+        case 11:
+            range_specifier_resolved = "1-octet count of objects (variable format)."
+            break
+        case 12:
+            range_specifier_resolved = "Reserved."
+            break
+        case 13:
+            range_specifier_resolved = "Reserved."
+            break
+        case 14:
+            range_specifier_resolved = "Reserved."
+            break
+        case 15:
+            range_specifier_resolved = "Reserved."
+            break
+    }
+
+    let object_prefix = as_int>>4 & 0x07
+    let object_prefix_resolved=""
+    switch (object_prefix){
+        case 0:
+            object_prefix_resolved="Objs packed without a prefix."
+            break
+        case 1:
+            object_prefix_resolved="Objs prefixed with 1-octet index."
+            break
+        case 2:
+            object_prefix_resolved="Objs prefixed with 2-octet index."
+            break
+        case 3:
+            object_prefix_resolved="Objs prefixed with 4-octet index."
+            break
+        case 4:
+            object_prefix_resolved="Objs prefixed with 1-octet object size."
+            break
+        case 5:
+            object_prefix_resolved="Objs prefixed with 2-octet object size."
+            break
+        case 6:
+            object_prefix_resolved="Objs prefixed with 4-octet object size."
+            break
+        case 7:
+            object_prefix_resolved="Reserved."
+            break
+    }
+    return [range_specifier_resolved,object_prefix_resolved]
+}
+
+//takes group and variation, returns size in bits
+//divide result by 8 to get bytes, or 4 to get the number of characters
+//returns -1 if not found
+function calculateObjectSize(group,variation){
+    if (group==1 || group==10){
+        if (variation==1){
+            return 1
+        } else if(variation==2){
+            return 8
+        }
+    }else if (group==2 || group==4 || group==11|| group==13){
+        if (variation==1){
+            return 1
+        }else if (variation==2){
+            return 7*8
+        }else if (variation==3){
+            return 3*8
+        }
+    }else if (group==3){
+        if (variation==1){
+            return 2
+        }else if (variation==2){
+            return 8
+        }
+    }else if (group==12){
+        if (variation==1 || variation==2){
+            return 11*8 
+        }
+    }else if (group==20){
+        if (variation==1){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==5){
+            return 4*8
+        }
+        else if (variation==6){
+            return 2*8
+        }
+        
+    }else if (group==21 || group==22 || group==23){
+        if (variation==1){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==5){
+            return 11*8
+        }
+        else if (variation==6){
+            return 9*8
+        }else if (variation==9){
+            return 4*8
+        }
+        else if (variation==10){
+            return 2*8
+        }
+        
+    }else if (group==30){
+        if (variation==1 || variation==5){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 4*8
+        }
+        else if (variation==4){
+            return 2*8
+        }
+        else if (variation==6){
+            return 9*8
+        }
+        
+    }else if (group==31){
+        if (variation==1){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 11*8
+        }
+        else if (variation==4){
+            return 9*8
+        }
+        else if (variation==5){
+            return 4*8
+        }
+        else if (variation==6){
+            return 2*8
+        }
+        else if (variation==7){
+            return 5*8
+        }
+        else if (variation==8){
+            return 9*8
+        }
+    }else if (group==32 || group==33 || group==42|| group==43){
+        if (variation==1 ){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 11*8
+        }
+        else if (variation==4){
+            return 9*8
+        }
+        else if (variation==5){
+            return 5*8
+        }
+        else if (variation==6){
+            return 9*8
+        }
+        else if (variation==7){
+            return 11*8
+        }
+        else if (variation==8){
+            return 15*8
+        }
+        
+    }else if (group==34){
+        if (variation==1 ){
+            return 2*8
+        }else if (variation==2 || variation==3){
+            return 4*8
+        }
+        
+    }else if (group==40 || group==41){
+        if (variation==1 ){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 5*8
+        }
+        else if (variation==4){
+            return 9*8
+        }
+        
+    }else if (group==50){
+        if (variation==1 ){
+            return 6*8
+        }else if (variation==2){
+            return 10*8
+        }
+        else if (variation==3){
+            return 6*8
+        }
+        else if (variation==4){
+            return 11*8
+        }
+        
+    }else if (group==51){
+        return 6*8
+    }else if (group==52){
+        return 2*8
+        
+    }else if (group==80){
+        return 2*8
+        
+    }else if (group==81){
+        return 3*8
+        
+    }else if (group==86){
+        if (variation==2){
+            return 8
+        }
+        
+    }else if (group==101){
+        if (variation==1 ){
+            return 2*8
+        }else if (variation==2){
+            return 4*8
+        }
+        else if (variation==3){
+            return 8*8
+        }
+        
+    }else if (group==102){
+        return 8
+    }else if (group==120){
+        if (variation==4){
+            return 8
+        }
+        
+    }else if (group==121){
+        if (variation==1){
+            return 7*8
+        }
+        
+    }else if (group==122){
+        if (variation==1){
+            return 7*8
+        } else if (variation==2){
+            return 13*8
+        }
+    }
+    return -1
+}
+
 function handleApplicationObjects(input){
     console.log("Application Objects: "+input)
-    let objects=[]
-    const node = document.getElementById("output-object-0").childNodes
-    const clone = node.cloneNode(true)
-    console.log(node)
-    if (input.length > 18){
-        //multiple objects, break them down
-        let counter=1
-        objects = input.match(/.{1,18}/g)
-        console.log(objects)
-        objects.array.forEach(object => {
-            let id = "output-object-"+counter
-            let output_fields = document.createElement("div")
-            output_fields.setAttribute("id",id)
-            document.getElementById("output-objects").appendChild(output_fields)
-            output_fields.children[0].value = "Output Object "+counter
-        });
-    }
-    
-    
+    let group = input.substring(0,2)
+    let variation = input.substring(2,4)
+    let qualifier = input.substring(4,6)
+    let qualifier_resolved = calculateQualifier(qualifier)
+    let range = input.substring(6,8)
+
+
+    console.log("Group: "+group)
+    console.log("Variation: "+variation)
+    console.log("Qualifier: "+qualifier)
+    console.log("Range Specifier: "+qualifier_resolved[0]+"\nObject Prefix: "+qualifier_resolved[1])
+    console.log("Range: " +range)
+
+    let objectSize = calculateObjectSize(group,variation)
+
 
 }
 
