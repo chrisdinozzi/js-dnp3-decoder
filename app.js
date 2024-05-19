@@ -398,42 +398,53 @@ function calculateQualifier(qualifier){
     let as_int = Number("0x"+qualifier)
     let range_specifier = as_int & 0x0F
     let range_specifier_resolved = ""
+    let range_size=-1
     switch (range_specifier){
         case 0:
             range_specifier_resolved = "1-octet start - stop indexes."
+            range_size=1
             break
         case 1:
             range_specifier_resolved = "2-octet start – stop indexes."
+            range_size=2
             break
         case 2:
             range_specifier_resolved = "4-octet start – stop indexes."
+            range_size=4
             break
         case 3:
             range_specifier_resolved = "1-octet start – stop virtual addresses."
+            range_size=1
             break
         case 4:
             range_specifier_resolved = "2-octet start – stop virtual addresses."
+            range_size=2
             break
         case 5:
             range_specifier_resolved = "4-octet start – stop virtual addresses."
+            range_size=4
             break
         case 6:
             range_specifier_resolved = "No range field used. Implies all objects."
             break
         case 7:
             range_specifier_resolved = "1-octet count of objects."
+            range_size=1
             break
         case 8:
             range_specifier_resolved = "2-octet count of objects."
+            range_size=2
             break
         case 9:
             range_specifier_resolved = "4-octet count of objects."
+            range_size=4
             break
         case 10:
             range_specifier_resolved = "Reserved."
             break
         case 11:
             range_specifier_resolved = "1-octet count of objects (variable format)."
+            range_size=1
             break
         case 12:
             range_specifier_resolved = "Reserved."
@@ -451,37 +462,45 @@ function calculateQualifier(qualifier){
 
     let object_prefix = as_int>>4 & 0x07
     let object_prefix_resolved=""
+    let object_prefix_size=-1
     switch (object_prefix){
         case 0:
             object_prefix_resolved="Objs packed without a prefix."
+            object_prefix_size=0
             break
         case 1:
             object_prefix_resolved="Objs prefixed with 1-octet index."
+            object_prefix_size=1
             break
         case 2:
             object_prefix_resolved="Objs prefixed with 2-octet index."
+            object_prefix_size=2
             break
         case 3:
             object_prefix_resolved="Objs prefixed with 4-octet index."
+            object_prefix_size=4
             break
         case 4:
             object_prefix_resolved="Objs prefixed with 1-octet object size."
+            object_prefix_size=1
             break
         case 5:
             object_prefix_resolved="Objs prefixed with 2-octet object size."
+            object_prefix_size=2
             break
         case 6:
             object_prefix_resolved="Objs prefixed with 4-octet object size."
+            object_prefix_size=4
             break
         case 7:
             object_prefix_resolved="Reserved."
             break
     }
-    return [range_specifier_resolved,object_prefix_resolved]
+    return [range_specifier_resolved,object_prefix_resolved,range_size,object_prefix_size]
 }
 
 //takes group and variation, returns size in bits
-//divide result by 8 to get bytes, or 4 to get the number of characters
+//divide result by 8 to get bytes, or 2 to get the number of characters
 //returns -1 if not found
 function calculateObjectSize(group,variation){
     if (group==1 || group==10){
@@ -492,7 +511,7 @@ function calculateObjectSize(group,variation){
         }
     }else if (group==2 || group==4 || group==11|| group==13){
         if (variation==1){
-            return 1
+            return 1*8
         }else if (variation==2){
             return 7*8
         }else if (variation==3){
@@ -691,8 +710,11 @@ function handleApplicationObjects(input){
     let variation = input.substring(2,4)
     let qualifier = input.substring(4,6)
     let qualifier_resolved = calculateQualifier(qualifier)
-    let range = input.substring(6,8)
 
+
+    let range_size = qualifier_resolved[2]
+    let range = input.substring(6,6+range_size*2)
+    let object_prefix_size = qualifier_resolved[3]
 
     console.log("Group: "+group)
     console.log("Variation: "+variation)
@@ -701,7 +723,17 @@ function handleApplicationObjects(input){
     console.log("Range: " +range)
 
     let objectSize = calculateObjectSize(group,variation)
+    if (objectSize>=8){
+        objectSize = objectSize/4 //the number of characters
+    }
+    console.log("Object Size (bytes): " +objectSize)
+    let length_pre_data = 6+range_size*2+object_prefix_size*2
+    console.log("Data: "+input.substring(length_pre_data,length_pre_data+objectSize))
+    console.log("===============================")
 
+    // if (input.length>length_pre_data+objectSize){
+    //     handleApplicationObjects(input.substring(length_pre_data+objectSize))
+    // }
 
 }
 
