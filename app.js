@@ -716,31 +716,27 @@ function calculateObjectSize(group,variation){
 
 function handleApplicationObjects(input){
     console.log("Application Objects: "+input)
-    let group = input.substr(0,2)
-    let variation = input.substr(2,2)
-    let qualifier = input.substr(4,2)
+    let group = input.substr(0,2) //first byte
+    let variation = input.substr(2,2) //second byte
+    let qualifier = input.substr(4,2) //third byte
     let qualifier_resolved = calculateQualifier(qualifier)
     let range_size = qualifier_resolved[2]
-    let range = Number("0x"+MSBLSBSwap(input.substr(6,range_size*2)))
+    let range = Number("0x"+MSBLSBSwap(input.substr(6,range_size*2))) //swap msb and lsb and convert to decimal
     let object_prefix_size = qualifier_resolved[3]
-
+    let length_pre_data = 6+range_size*2+object_prefix_size*2
+    let index = Number("0x"+MSBLSBSwap(input.substr(6+range_size*2,object_prefix_size*2))) //swap msb and lsb and convert to decimal
+    let objectSize = calculateObjectSize(group,variation) //get object size
+    
     console.log("Group: "+group)
     console.log("Variation: "+variation)
     console.log("Qualifier: "+qualifier)
     console.log("Range Specifier: "+qualifier_resolved[0]+"\nObject Prefix: "+qualifier_resolved[1])
     console.log("Range: " +range)
-
-    let objectSize = calculateObjectSize(group,variation)
-    if (objectSize>=8){
-        objectSize = objectSize/8 //the number of bytes
-    }
-    console.log("Object Size (bytes): " +objectSize)
-    let length_pre_data = 6+range_size*2+object_prefix_size*2
-    let index = Number("0x"+MSBLSBSwap(input.substr(6+range_size*2,object_prefix_size*2)))
+    console.log("Object Size (bits): " +objectSize)
     console.log("Index: "+index)
     console.log("X: "+range_size*2)
     console.log("Y: "+object_prefix_size*2)
-    console.log("Data: "+input.substr(length_pre_data,objectSize*2))
+    console.log("Data: "+input.substr(length_pre_data,objectSize/4))
     console.log("===============================")
 
     // if (input.length>length_pre_data+objectSize){
