@@ -723,21 +723,34 @@ function handleApplicationObjects(input){
     let range_size = qualifier_resolved[2]
     let range = Number("0x"+MSBLSBSwap(input.substr(6,range_size*2))) //swap msb and lsb and convert to decimal
     let object_prefix_size = qualifier_resolved[3]
-    let length_pre_data = 6+range_size*2+object_prefix_size*2
+    let length_pre_data = 6+range_size*2
     let index = Number("0x"+MSBLSBSwap(input.substr(6+range_size*2,object_prefix_size*2))) //swap msb and lsb and convert to decimal
     let objectSize = calculateObjectSize(group,variation) //get object size
+    let data = input.substr(length_pre_data)
     
+    let data_chunk_length = (object_prefix_size*2)+(objectSize/4)
+    console.log("!!!!:"+data_chunk_length   )
+
     console.log("Group: "+group)
     console.log("Variation: "+variation)
     console.log("Qualifier: "+qualifier)
     console.log("Range Specifier: "+qualifier_resolved[0]+"\nObject Prefix: "+qualifier_resolved[1])
+    console.log("Object Prefix Size: "+object_prefix_size)
     console.log("Range: " +range)
     console.log("Object Size (bits): " +objectSize)
     console.log("Index: "+index)
-    console.log("X: "+range_size*2)
-    console.log("Y: "+object_prefix_size*2)
-    console.log("Data: "+input.substr(length_pre_data,objectSize/4))
+    console.log("Data: "+data)
     console.log("===============================")
+
+    let offset=0
+    let data_chunk = ""
+    for (let i=0;i<range;i++){
+        data_chunk = input.substr(length_pre_data+offset,data_chunk_length)
+        console.log("Index: "+Number("0x"+MSBLSBSwap(data_chunk.substr(0,4))))
+        console.log("Value: "+data_chunk.substr(4))
+        console.log("------------------------------")
+        offset +=data_chunk_length
+    }
 
     // if (input.length>length_pre_data+objectSize){
     //     handleApplicationObjects(input.substring(length_pre_data+objectSize))
