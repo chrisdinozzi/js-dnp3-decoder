@@ -36,9 +36,9 @@ function setCheckbox(id,value){
 
 function MSBLSBSwap(data){
     msb = data.substr(0,2)
-    console.log(msb)
+    //console.log(msb)
     lsb = data.substr(2)
-    console.log(lsb)
+    //console.log(lsb)
     return String(lsb)+String(msb)
 }
 
@@ -389,11 +389,7 @@ function handleApplicationHeader(input){
 //////////////////////////////
 
 //example code
-//full packet = 0564de4400004308affdebeb81000002022817004001011312410ab47c8f014201011312417c8f01430101139be712417c8f014401011312417c8f01460119bd011312417c8f014801011312417c8f01196c4a01011412417c8f014c01011412417cebc98f014e01011412417c8f0150018114124f10417c8f015101811412417c8f0152018130141412417c8f015301811412417c8f0154b43301811412417c8f015501811412417c8fd2ec015601811412417c8f01570181151241551d7c8f015801011512417c8f015901011548c212417c8f015a01811512417c8f015b018908011512417c8f015c01011512417c8f01a8aa5d01811512417c8f01f6db
-
-//data = eb81000002022817004001011312410ab47c8f014201011312417c8f01430101139be712417c8f014401011312417c8f01460119bd011312417c8f014801011312417c8f01196c4a01011412417c8f014c01011412417cebc98f014e01011412417c8f0150018114124f10417c8f015101811412417c8f0152018130141412417c8f015301811412417c8f0154b43301811412417c8f015501811412417c8fd2ec015601811412417c8f01570181151241551d7c8f015801011512417c8f015901011548c212417c8f015a01811512417c8f015b018908011512417c8f015c01011512417c8f01a8aa5d01811512417c8f01f6db
-
-//1 object = 
+//full packet = 05640bc4430800008b86eccc013c0206351f
 
 // group                            1 byte
 // variation                        2 byte
@@ -436,6 +432,7 @@ function calculateQualifier(qualifier){
             break
         case 6:
             range_specifier_resolved = "No range field used. Implies all objects."
+            range_size=0
             break
         case 7:
             range_specifier_resolved = "1-octet count of objects."
@@ -469,7 +466,7 @@ function calculateQualifier(qualifier){
             range_specifier_resolved = "Reserved."
             break
     }
-
+    console.log("RANGE SIZE: "+range_size)
     let object_prefix = as_int>>4 & 0x07
     let object_prefix_resolved=""
     let object_prefix_size=-1
@@ -716,8 +713,8 @@ function calculateObjectSize(group,variation){
 
 function handleApplicationObjects(input){
     console.log("Application Objects: "+input)
-    let group = input.substr(0,2) //first byte
-    let variation = input.substr(2,2) //second byte
+    let group = Number("0x"+input.substr(0,2)) //first byte
+    let variation = Number("0x"+input.substr(2,2)) //second byte
     let qualifier = input.substr(4,2) //third byte
     let qualifier_resolved = calculateQualifier(qualifier)
     let range_size = qualifier_resolved[2]
