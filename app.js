@@ -42,6 +42,18 @@ function MSBLSBSwap(data){
     return String(lsb)+String(msb)
 }
 
+function stripCRC(data){
+    var clean_data=""
+    console.log("LOOK HERE!!!!!!! "+Math.ceil(data.length/36))
+    for (let i=0;i<Math.ceil(data.length/36);i++){
+        clean_data+=data.substr(i*36,32);
+        console.log("Data (chunk no. "+i+"):" + data.substr(i*36,32))   
+        console.log("CRC: (chunk no. "+i+"):" +data.substr(i*36+32,4))
+    }
+    console.log("Removed CRC: "+clean_data)
+    return clean_data
+}
+
 ///////////////////
 //DATA LINK LAYER//
 ///////////////////
@@ -722,11 +734,11 @@ function handleApplicationObjects(input){
     let object_prefix_size = qualifier_resolved[3]
     let length_pre_data = 6+range_size*2
     let index = Number("0x"+MSBLSBSwap(input.substr(6+range_size*2,object_prefix_size*2))) //swap msb and lsb and convert to decimal
-    let objectSize = calculateObjectSize(group,variation) //get object size
+    let objectSize = calculateObjectSize(group,variation) //get object size in bits
     let data = input.substr(length_pre_data)
     
     let data_chunk_length = (object_prefix_size*2)+(objectSize/4)
-    console.log("!!!!:"+data_chunk_length   )
+    console.log("!!!!:"+data_chunk_length)
 
     console.log("Group: "+group)
     console.log("Variation: "+variation)
@@ -743,6 +755,7 @@ function handleApplicationObjects(input){
     let data_chunk = ""
     for (let i=0;i<range;i++){
         data_chunk = input.substr(length_pre_data+offset,data_chunk_length)
+        console.log("Data Chunk: "+data_chunk)
         console.log("Index: "+Number("0x"+MSBLSBSwap(data_chunk.substr(0,4))))
         console.log("Value: "+data_chunk.substr(4))
         console.log("------------------------------")
@@ -764,14 +777,15 @@ function main(input){
     handleDataLinkLayer(input.substring(0,20))
     handleTransportLayer(input.substring(20,22))
     var objects=""
+    input = stripCRC(input.substr(20))
     if ((Number("0x"+input.substring(6,8))>>7 & 0x1) == 1){
         console.log("marco")
-        handleApplicationHeader(input.substring(22,26))
-        objects=input.substring(26)
+        handleApplicationHeader(input.substring(2,6))
+        objects=input.substring(6)
     } else{
         console.log("polo")
-        handleApplicationHeader(input.substring(22,30)) //Internal Indications only included in responses from outstation.
-        objects=input.substring(30)
+        handleApplicationHeader(input.substring(2,10)) //Internal Indications only included in responses from outstation.
+        objects=input.substring(10)
     }
 
     handleApplicationObjects(objects)
