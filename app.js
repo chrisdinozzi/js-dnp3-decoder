@@ -42,6 +42,7 @@ function MSBLSBSwap(data){
     return String(lsb)+String(msb)
 }
 
+//TODO: Rewrite this to take each 18 char chunk seperatly and remove the last two chars of the string, that will handle short chunks properly
 function stripCRC(data){
     var clean_data=""
     console.log("LOOK HERE!!!!!!! "+Math.ceil(data.length/36))
@@ -400,18 +401,6 @@ function handleApplicationHeader(input){
 //APPLICATION OBJECT HEADERS//
 //////////////////////////////
 
-//example code
-//full packet = 05640bc4430800008b86eccc013c0206351f
-
-// group                            1 byte
-// variation                        2 byte
-// qualifier                        3 byte
-// range (or number of items)       4 byte
-
-
-// value (?)                        5 byte
-// index (?)                        6+7 byte (swapped around!)
-// quality (?)                      8 byte
 function calculateQualifier(qualifier){
     let as_int = Number("0x"+qualifier)
     let range_specifier = as_int & 0x0F
@@ -520,7 +509,7 @@ function calculateQualifier(qualifier){
 
 //takes group and variation, returns size in bits
 //divide result by 8 to get bytes, or 2 to get the number of characters
-//returns -1 if not found
+//returns 0 if not found
 function calculateObjectSize(group,variation){
     if (group==1 || group==10){
         if (variation==1){
@@ -720,7 +709,7 @@ function calculateObjectSize(group,variation){
             return 13*8
         }
     }
-    return -1
+    return 0
 }
 
 function handleApplicationObjects(input){
@@ -756,8 +745,9 @@ function handleApplicationObjects(input){
     for (let i=0;i<range;i++){
         data_chunk = input.substr(length_pre_data+offset,data_chunk_length)
         console.log("Data Chunk: "+data_chunk)
-        console.log("Index: "+Number("0x"+MSBLSBSwap(data_chunk.substr(0,4))))
-        console.log("Value: "+data_chunk.substr(4))
+        console.log("Index: "+Number("0x"+MSBLSBSwap(data_chunk.substr(0,object_prefix_size*2))))
+        console.log("Quality: "+data_chunk.substr(object_prefix_size*2,2))
+        console.log("Value: "+data_chunk.substr(object_prefix_size*2+2))
         console.log("------------------------------")
         offset +=data_chunk_length
     }
