@@ -3,10 +3,12 @@
 //https://www.winccoa.com/documentation/WinCCOA/latest/en_US/Treiber_DNP3/dnp3_application_layer.html
 //https://www.researchgate.net/figure/DNP3-message-architecture_fig1_308143053
 
+/////////////////////
+//HELPER FUNCTIONS//
+////////////////////
 function cleanInput(i){
     return i.replaceAll(" ","").replaceAll("\n","").replaceAll("0x","").toLowerCase()
 }
-
 
 function getInput(){
     return document.getElementById("input").value;
@@ -40,6 +42,51 @@ function MSBLSBSwap(data){
     return String(lsb)+String(msb)
 }
 
-function main(input){
+function hexToInt(hex){
+    return Number("0x"+hex)
+}
 
+
+function validateData(data){
+    //check the first characters are 0x05 and 0x64
+    //return true or false
+}
+
+function getLength(data){
+    //extract length and return as integer
+}
+
+////////////
+//PARSING//
+///////////
+function parseDataLinkLayer(data){
+
+}
+
+function parseTransportControl(data){
+
+}
+
+function cleanCRC(data){
+
+}
+
+function parseApplicationHeader(data){
+
+}
+
+function parseObjectHeader(data){
+
+}
+
+function parseObjects(data){
+
+}
+
+function main(input){
+    //1. Handle data link layer (first 10 bytes/20 characters)
+    //2. Handle transport control (byte 11)
+    //3. Clean out CRC from rest of data
+    //4. Parse application header
+    //5. Parse first object header
 }
