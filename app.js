@@ -780,3 +780,43 @@
 
 //     handleApplicationObjects(objects)
 // }
+
+
+function cleanInput(i){
+    return i.replaceAll(" ","").replaceAll("\n","").replaceAll("0x","").toLowerCase()
+}
+
+function getInput(){
+    return document.getElementById("input").value;
+}
+
+function setOutput(id,value){
+    if (document.getElementById(id)==null){
+        return "ID not found."
+    } else{
+        document.getElementById(id).value = value;
+        return 1
+    }
+}
+
+function setCheckbox(id,value){
+    if (document.getElementById(id)==null){
+        return "ID not found."
+    } 
+    //console.log("Setting: "+id+" to: "+value)
+    if (value==1){
+        document.getElementById(id).checked = true;
+        return
+    } else if (value==0){
+        document.getElementById(id).checked = false;
+        return
+    }
+}
+
+function MSBLSBSwap(data){
+    msb = data.substr(0,2)
+    //console.log(msb)
+    lsb = data.substr(2)
+    //console.log(lsb)
+    return String(lsb)+String(msb)
+}
