@@ -210,9 +210,7 @@ function parseTransportControl(data){
 
 function cleanCRC(data){
     let clean_data=""
-    //split data into 18 bytes chunks, with one short chunk at the end
-    //validate the crc then take off the end
-    //return data with crc removed
+    //TODO: validate the crc then take off the end
     if (data.length < 18){
         //one small chunk
         clean_data = data.substring(0,data.length-4)
@@ -237,26 +235,38 @@ function parseDataChunks(data,dir){
         console.log("From Master")
         application_header = clean_data.substr(2,4)
         first_object_header = clean_data.substr(6,10)
-
-
     } else if (dir==0){ //From Outstation
         console.log("From Outstation")
         //will include an extra 2 bytes for Internal Indications
         application_header = clean_data.substr(2,8)
         first_object_header = clean_data.substr(10,10)
     }
+
     console.log(application_header)
     console.log(first_object_header)
 
-    let parsed_application_header = parseApplicationHeader(clean_data)
+    let parsed_application_header = parseApplicationHeader(application_header)
     let parsed_first_object_header = parseFirstObjectHeader(first_object_header)
 
     return {application_header:parsed_application_header,first_object_header:parsed_first_object_header,dnp3_objects:dnp3_objects}
 
 }
 
-function parseApplicationHeader(data,dir){
+function parseApplicationHeader(data){
+    //Application Control
+    let application_control = data.substr(0,2)
+    application_control = hex2bin(application_control)
+    let fir = application_control.substr(0,1)
+    let fin = application_control.substr(1,1)
+    let con = application_control.substr(2,1)
+    let uns = application_control.substr(3,1)
+    let seq = bin2int(application_control.substr(4))
+    application_control = {fir:fir,fin:fin,con:con,uns:uns,seq:seq}
 
+    if (data.length==8){//From Outstation
+        //do interal indicators too
+        //TODO: Implement
+    } 
 }
 
 function parseFirstObjectHeader(data){
