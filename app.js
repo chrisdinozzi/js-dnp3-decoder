@@ -151,19 +151,19 @@ function parseControlOctet(control_octet){
     let function_code_name=""
     if (prm==1){
         switch(function_code){
-            case 0:
+            case "0":
                 function_code_name="RESET_LINK_STATES"
                 break;
-            case 2:
+            case "2":
                 function_code_name="TEST_LINK_STATES"
                 break;
-            case 3:
+            case "3":
                 function_code_name="CONFIRMED_USER_DATA"
                 break;
-            case 4:
+            case "4":
                 function_code_name="UNCONFIRMED_USER_DATA"
                 break;
-            case 9:
+            case "9":
                 function_code_name="REQUEST_LINK_STATUS"
                 break;
             default:
@@ -172,10 +172,10 @@ function parseControlOctet(control_octet){
         }
     }else if (prm==0){
         switch(function_code){
-            case 0:
+            case "0":
                 function_code_name="ACK"
                 break;
-            case 1:
+            case "1":
                 function_code_name="NACK"
                 break;
             case 'B':
