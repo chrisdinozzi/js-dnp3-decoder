@@ -105,7 +105,6 @@ function calculateCRC(data){
 }
 
 function validateData(data){
-    console.log(data.substr(0,4))
     //Check starting bytes
     if (data.substr(0,4) != "0564"){
         return false
@@ -209,19 +208,58 @@ function parseTransportControl(data){
     return {fin:fin,fir:fir,seq:seq}
 }
 
-function parseDataChunks(data){
-
-}
-
 function cleanCRC(data){
+    let clean_data=""
+    //split data into 18 bytes chunks, with one short chunk at the end
+    //validate the crc then take off the end
+    //return data with crc removed
+    if (data.length < 18){
+        //one small chunk
+        clean_data = data.substring(0,data.length-4)
+    } else{
+        data = data.match(/.{1,36}/g);
+        //console.log(data)
+        data.forEach(function (block) {
+            clean_data+=block.substring(0,block.length-4)
+        })
+    }
+    console.log(clean_data)
+    return clean_data
+}
+
+function parseDataChunks(data,dir){
+    let clean_data = cleanCRC(data)
+    //is this comms from an outstation or a master?
+    let application_header=""
+    let first_object_header=""
+
+    if (dir==1){ //From Master
+        console.log("From Master")
+        application_header = clean_data.substr(2,4)
+        first_object_header = clean_data.substr(6,10)
+
+
+    } else if (dir==0){ //From Outstation
+        console.log("From Outstation")
+        //will include an extra 2 bytes for Internal Indications
+        application_header = clean_data.substr(2,8)
+        first_object_header = clean_data.substr(10,10)
+    }
+    console.log(application_header)
+    console.log(first_object_header)
+
+    let parsed_application_header = parseApplicationHeader(clean_data)
+    let parsed_first_object_header = parseFirstObjectHeader(first_object_header)
+
+    return {application_header:parsed_application_header,first_object_header:parsed_first_object_header,dnp3_objects:dnp3_objects}
 
 }
 
-function parseApplicationHeader(data){
+function parseApplicationHeader(data,dir){
 
 }
 
-function parseObjectHeader(data){
+function parseFirstObjectHeader(data){
 
 }
 
@@ -235,14 +273,16 @@ function main(input){
     if (validateData(input)){
         let data_link_layer = input.substr(0,20)
         let transport_control = input.substr(20,2)
-        let data_chunks = input.substr(22)
+        let data_chunks = input.substr(20)
 
         let parsed_data_link_layer = parseDataLinkLayer(data_link_layer)
         console.log(parsed_data_link_layer)
 
         let parsed_transport_control = parseTransportControl(transport_control)
         console.log(parsed_transport_control)
-        let parsed_data_chunks = parseDataChunks(data_chunks)
+
+        let parsed_data_chunks = parseDataChunks(data_chunks,parsed_data_link_layer.control_octet.dir)
+        console.log(parsed_data_chunks)
     } else{
         console.log("Data Invalid!")
     }
