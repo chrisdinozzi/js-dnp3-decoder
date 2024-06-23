@@ -265,7 +265,86 @@ function parseApplicationHeader(data){
 
     if (data.length==8){//From Outstation
         //do interal indicators too
-        //TODO: Implement
+        let iin = MSBLSBSwap(data.substr(4,4))
+        let msb_iin=hex2bin(iin.substr(0,2))
+        let lsb_iin=hex2bin(iin.substr(2,2))
+
+        msb_iin = msb_iin.split("").reverse().join("").search('1')
+        lsb_iin = lsb_iin.split("").reverse().join("").search('1')
+        
+        //-1 = no iin
+        console.log("MSB IIN: "+msb_iin)
+        console.log("LSB IIN: "+lsb_iin)
+
+        let msb_iin_message=""
+        switch(msb_iin){
+            case 0:
+                msb_iin_message="Function Code Not Supported"
+                break;
+            case 1:
+                msb_iin_message="Requested Object Unknown"
+                break;
+            case 2:
+                msb_iin_message="Parameter Error"
+                break;
+            case 3:
+                msb_iin_message="Event Buffer Overflow"
+                break;
+            case 4:
+                msb_iin_message="Already Executing"
+                break;
+            case 5:
+                msb_iin_message="Configuration Corrupt"
+                break;
+            case 6:
+                msb_iin_message="Reserved"
+                break;
+            case 7:
+                msb_iin_message="Reserved"
+                break;
+            case -1:
+                msb_iin_message="No MSB IIN Message"
+                break;
+            default:
+                msb_iin_meesage="MSB IIN Meesage Broken!!!!!!!!!!!!!!!!!"
+                break;
+        }
+        console.log(msb_iin_message)
+
+        let lsb_iin_message=""
+        switch(lsb_iin){
+            case 0:
+                lsb_iin_message="All Stations"
+                break;
+            case 1:
+                lsb_iin_message="Class 1 Data Available"
+                break;
+            case 2:
+                lsb_iin_message="Class 2 Data Available"
+                break;
+            case 3:
+                lsb_iin_message="Class 3 Data Available"
+                break;
+            case 4:
+                lsb_iin_message="Need Time"
+                break;
+            case 5:
+                lsb_iin_message="Local Control"
+                break;
+            case 6:
+                lsb_iin_message="Device Trouble"
+                break;
+            case 7:
+                lsb_iin_message="Device Restart"
+                break;
+            case -1:
+                lsb_iin_message="No LSB IIN Message"
+                break;
+            default:
+                lsb_iin_message="UUUUUH LSB MACHINE BROKE"
+                break;
+        }
+        console.log(lsb_iin_message)
     } 
 }
 
