@@ -54,6 +54,10 @@ function bin2hex(bin){
     return parseInt(bin, 2).toString(16).toUpperCase();
 }
 
+function bin2int(bin){
+    return parseInt(bin,2);
+}
+
 function calculateCRC(data){
     //https://github.com/IvanGaravito/dnp3-crc/blob/master/index.js
     var crcTable =
@@ -197,7 +201,12 @@ function parseControlOctet(control_octet){
 }
 
 function parseTransportControl(data){
+    let data_bin = hex2bin(data)
+    let fin = data_bin.substr(0,1)
+    let fir = data_bin.substr(1,1)
+    let seq = bin2int(data_bin.substr(2))
 
+    return {fin:fin,fir:fir,seq:seq}
 }
 
 function parseDataChunks(data){
@@ -228,10 +237,11 @@ function main(input){
         let transport_control = input.substr(20,2)
         let data_chunks = input.substr(22)
 
-
         let parsed_data_link_layer = parseDataLinkLayer(data_link_layer)
         console.log(parsed_data_link_layer)
+
         let parsed_transport_control = parseTransportControl(transport_control)
+        console.log(parsed_transport_control)
         let parsed_data_chunks = parseDataChunks(data_chunks)
     } else{
         console.log("Data Invalid!")
