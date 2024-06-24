@@ -221,7 +221,6 @@ function cleanCRC(data){
             clean_data+=block.substring(0,block.length-4)
         })
     }
-    console.log(clean_data)
     return clean_data
 }
 
@@ -232,24 +231,110 @@ function parseDataChunks(data,dir){
     let first_object_header=""
 
     if (dir==1){ //From Master
-        console.log("From Master")
         application_header = clean_data.substr(2,4)
         first_object_header = clean_data.substr(6,10)
     } else if (dir==0){ //From Outstation
-        console.log("From Outstation")
         //will include an extra 2 bytes for Internal Indications
         application_header = clean_data.substr(2,8)
         first_object_header = clean_data.substr(10,10)
     }
 
-    console.log(application_header)
-    console.log(first_object_header)
-
     let parsed_application_header = parseApplicationHeader(application_header)
+    console.log(parsed_application_header)
     let parsed_first_object_header = parseFirstObjectHeader(first_object_header)
 
     return {application_header:parsed_application_header,first_object_header:parsed_first_object_header,dnp3_objects:dnp3_objects}
 
+}
+
+function parseFunctionCode(function_code){
+    switch (function_code) {
+        case "00":
+            return "CONFIRM"
+        case "01":
+            return "READ"
+        case "02":
+            return "WRITE"
+        case "03":
+            return "SELECT"
+            
+        case "04":
+            return "OPERATE"
+            
+        case "05":
+            return "DIRECT_OPERATE"
+            
+        case "06":
+            return "DIRECT_OPERATE_NR"
+            
+        case "07":
+            return "IMMED_FREEZE"
+            
+        case "08":
+            return "IMMED_FREEZE_NR"
+            
+        case "09":
+            return "FREEZE_CLEAR"
+            
+        case "0A":
+            return "FREEZE_CLEAR_NR"
+            
+        case "0B":
+            return "FREEZE_AT_TIME"
+            
+        case "0C":
+            return "FREEZE_AT_TIME_NR"
+            
+        case "0D":
+            return "COLD_RESTART"
+            
+        case "0E":
+            return "WARM_RESTART"
+        case "0F":
+            return "INITIALIZE_DATA"
+        case "10":
+            return "INITIALIZE_APPL"
+        case "11":
+            return "START_APPL"
+        case "12":
+            return "STOP_APPL"
+        case "13":
+            return "SAVE_CONFIG"
+        case "14":
+            return "ENABLE_UNSOLICITED"
+        case "15":
+            return "DISABLE_UNSOLICITED"
+        case "16":
+            return "ASSIGN_CLASS"
+        case "17":
+            return "DELAY_MEASURE"
+        case "18":
+            return "RECORD_CURRENT_TIME"
+        case "19":
+            return "OPEN_FILE"
+        case "1a":
+            return "CLOSE_FILE"
+        case "1b":
+            return "DELETE_FILE"
+        case "1c":
+            return "GET_FILE_INFO"
+        case "1d":
+            return "AUTHENTICATE_FILE"
+        case "1e":
+            return "ABORT_FILE"
+        case "1f":
+            return "ACTIVATE_CONFIG"
+        case "20":
+            return "AUTHENTICATE_REQ"
+        case "21":
+            return "AUTH_REQ_NO_ACK"
+        case "81":
+            return "RESPONSE"
+        case "82":
+            return "UNSOLICITED_RESPONSE"
+        case "83":
+            return "AUTHENTICATE_RESP"
+    }
 }
 
 function parseApplicationHeader(data){
@@ -263,19 +348,21 @@ function parseApplicationHeader(data){
     let seq = bin2int(application_control.substr(4))
     application_control = {fir:fir,fin:fin,con:con,uns:uns,seq:seq}
 
+    //Function Code
+    let function_code = data.substr(2,2)
+    let function_code_name = parseFunctionCode(function_code)
+    
+    //Internal Indicators
     if (data.length==8){//From Outstation
         //do interal indicators too
         let iin = MSBLSBSwap(data.substr(4,4))
         let msb_iin=hex2bin(iin.substr(0,2))
         let lsb_iin=hex2bin(iin.substr(2,2))
 
+        //-1 = no iin
         msb_iin = msb_iin.split("").reverse().join("").search('1')
         lsb_iin = lsb_iin.split("").reverse().join("").search('1')
         
-        //-1 = no iin
-        console.log("MSB IIN: "+msb_iin)
-        console.log("LSB IIN: "+lsb_iin)
-
         let msb_iin_message=""
         switch(msb_iin){
             case 0:
@@ -306,10 +393,9 @@ function parseApplicationHeader(data){
                 msb_iin_message="No MSB IIN Message"
                 break;
             default:
-                msb_iin_meesage="MSB IIN Meesage Broken!!!!!!!!!!!!!!!!!"
+                msb_iin_message="MSB IIN Meesage Broken!!!!!!!!!!!!!!!!!"
                 break;
         }
-        console.log(msb_iin_message)
 
         let lsb_iin_message=""
         switch(lsb_iin){
@@ -344,12 +430,66 @@ function parseApplicationHeader(data){
                 lsb_iin_message="UUUUUH LSB MACHINE BROKE"
                 break;
         }
-        console.log(lsb_iin_message)
-    } 
+        return {application_control:application_control,function_code:function_code_name,msb_iin:msb_iin_message,lsb_iin:lsb_iin_message}
+    }
+    return {application_control:application_control,function_code:function_code_name}
+}
+
+function parseQualifierField(qf){
+    let object_prefix_code = bin2int(qf.substr(1,3))
+    let range_specifier_code = bin2hex(qf.substr(4))
+    console.log("Object Prefix Code: "+object_prefix_code)
+    console.log("Range Specifier Code: "+range_specifier_code)
+
+    let object_prefix={size:0,type:""} 
+    switch (object_prefix_code){
+        case 0:
+            object_prefix={size:0,type:""}
+            break;
+        case 1:
+            object_prefix={size:1,type:"Index"}
+            break;
+        case 2:
+            object_prefix={size:2,type:"Index"}
+            break;
+        case 3:
+            object_prefix={size:4,type:"Index"}
+            break;
+        case 4:
+            object_prefix={size:1,type:"Object Size"}
+            break;
+        case 5:
+            object_prefix={size:2,type:"Object Size"}
+            break;
+        case 6:
+            object_prefix={size:4,type:"Object Size"}
+            break;
+        case 7:
+            object_prefix={size:-1,type:"Reserved"}
+            break;
+    }
+
+    let range_field_contains=""
+    //TODO: implement range field lookup
+
+    return {object_prefix:object_prefix,range_field_contains:range_field_contains}
+
 }
 
 function parseFirstObjectHeader(data){
+    console.log("First Object Header: "+data)
+    let group = hex2int(data.substr(0,2))
+    let variation = hex2int(data.substr(2,2))
+    let qualifier_field = hex2bin(data.substr(4,2))
 
+    console.log("Group: "+group)
+    console.log("Variation: "+variation)
+    console.log("Qualifier Field: "+qualifier_field)
+    qualifier_field_parsed = parseQualifierField(qualifier_field)
+
+    let object_prefix = qualifier_field_parsed[0]
+    let range_field_contains = qualifier_field_parsed[1]
+    //check if we need to check for range specifier code
 }
 
 function parseObjects(data){
