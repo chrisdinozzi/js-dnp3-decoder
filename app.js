@@ -232,11 +232,11 @@ function parseDataChunks(data,dir){
 
     if (dir==1){ //From Master
         application_header = clean_data.substr(2,4)
-        first_object_header = clean_data.substr(6,10)
+        first_object_header = clean_data.substr(6)
     } else if (dir==0){ //From Outstation
         //will include an extra 2 bytes for Internal Indications
         application_header = clean_data.substr(2,8)
-        first_object_header = clean_data.substr(10,10)
+        first_object_header = clean_data.substr(10)
     }
 
     let parsed_application_header = parseApplicationHeader(application_header)
@@ -441,7 +441,7 @@ function parseQualifierField(qf){
     console.log("Object Prefix Code: "+object_prefix_code)
     console.log("Range Specifier Code: "+range_specifier_code)
 
-    let object_prefix={size:0,type:""} 
+    let object_prefix={size:-1,type:""} 
     switch (object_prefix_code){
         case 0:
             object_prefix={size:0,type:""}
@@ -469,35 +469,302 @@ function parseQualifierField(qf){
             break;
     }
 
-    let range_field_contains=""
-    //TODO: implement range field lookup
+    let range_field_contains={size:-1,type:""} //Either Start/Stop or Count
+    switch(range_specifier_code){
+        case "0":
+            range_field_contains={size:1,type:"start/stop"}
+            break;
+        case "1":
+            range_field_contains={size:2,type:"start/stop"}
+            break;
+        case "2":
+            range_field_contains={size:4,type:"start/stop"}
+            break;
+        case "3":
+            range_field_contains={size:1,type:"start/stop virtual"}
+            break;
+        case "4":
+            range_field_contains={size:2,type:"start/stop virtual"}
+            break;
+        case "5":
+            range_field_contains={size:4,type:"start/stop virtual"}
+            break;
+        case "6":
+            range_field_contains={size:0,type:"No Range Field"}
+            break;
+        case "7":
+            range_field_contains={size:1,type:"count"}
+            break;
+        case "8":
+            range_field_contains={size:2,type:"count"}
+            break;
+        case "9":
+            range_field_contains={size:4,type:"count"}
+            break;
+        case "A":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "B":
+            range_field_contains={size:1,type:"count (variable)"}
+            break;
+        case "C":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "D":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "E":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "F":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+    }
 
     return {object_prefix:object_prefix,range_field_contains:range_field_contains}
+}
 
+function calculateObjectSize(group,variation){
+    //returns size in bits, not octets
+    if (group==1 || group==10){
+        if (variation==1){
+            return 1
+        } else if(variation==2){
+            return 8
+        }
+    }else if (group==2 || group==4 || group==11|| group==13){
+        if (variation==1){
+            return 1*8
+        }else if (variation==2){
+            return 7*8
+        }else if (variation==3){
+            return 3*8
+        }
+    }else if (group==3){
+        if (variation==1){
+            return 2
+        }else if (variation==2){
+            return 8
+        }
+    }else if (group==12){
+        if (variation==1 || variation==2){
+            return 11*8 
+        }
+    }else if (group==20){
+        if (variation==1){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==5){
+            return 4*8
+        }
+        else if (variation==6){
+            return 2*8
+        }
+        
+    }else if (group==21 || group==22 || group==23){
+        if (variation==1){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==5){
+            return 11*8
+        }
+        else if (variation==6){
+            return 9*8
+        }else if (variation==9){
+            return 4*8
+        }
+        else if (variation==10){
+            return 2*8
+        }
+        
+    }else if (group==30){
+        if (variation==1 || variation==5){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 4*8
+        }
+        else if (variation==4){
+            return 2*8
+        }
+        else if (variation==6){
+            return 9*8
+        }
+        
+    }else if (group==31){
+        if (variation==1){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 11*8
+        }
+        else if (variation==4){
+            return 9*8
+        }
+        else if (variation==5){
+            return 4*8
+        }
+        else if (variation==6){
+            return 2*8
+        }
+        else if (variation==7){
+            return 5*8
+        }
+        else if (variation==8){
+            return 9*8
+        }
+    }else if (group==32 || group==33 || group==42|| group==43){
+        if (variation==1 ){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 11*8
+        }
+        else if (variation==4){
+            return 9*8
+        }
+        else if (variation==5){
+            return 5*8
+        }
+        else if (variation==6){
+            return 9*8
+        }
+        else if (variation==7){
+            return 11*8
+        }
+        else if (variation==8){
+            return 15*8
+        }
+        
+    }else if (group==34){
+        if (variation==1 ){
+            return 2*8
+        }else if (variation==2 || variation==3){
+            return 4*8
+        }
+        
+    }else if (group==40 || group==41){
+        if (variation==1 ){
+            return 5*8
+        }else if (variation==2){
+            return 3*8
+        }
+        else if (variation==3){
+            return 5*8
+        }
+        else if (variation==4){
+            return 9*8
+        }
+        
+    }else if (group==50){
+        if (variation==1 ){
+            return 6*8
+        }else if (variation==2){
+            return 10*8
+        }
+        else if (variation==3){
+            return 6*8
+        }
+        else if (variation==4){
+            return 11*8
+        }
+        
+    }else if (group==51){
+        return 6*8
+    }else if (group==52){
+        return 2*8
+        
+    }else if (group==80){
+        return 2*8
+        
+    }else if (group==81){
+        return 3*8
+        
+    }else if (group==86){
+        if (variation==2){
+            return 8
+        }
+        
+    }else if (group==101){
+        if (variation==1 ){
+            return 2*8
+        }else if (variation==2){
+            return 4*8
+        }
+        else if (variation==3){
+            return 8*8
+        }
+        
+    }else if (group==102){
+        return 8
+    }else if (group==120){
+        if (variation==4){
+            return 8
+        }
+        
+    }else if (group==121){
+        if (variation==1){
+            return 7*8
+        }
+        
+    }else if (group==122){
+        if (variation==1){
+            return 7*8
+        } else if (variation==2){
+            return 13*8
+        }
+    }
+    return 0
 }
 
 function parseFirstObjectHeader(data){
     console.log("First Object Header: "+data)
     let group = hex2int(data.substr(0,2))
     let variation = hex2int(data.substr(2,2))
+
+    //TODO: Calculate object size
+    let object_size=calculateObjectSize(group,variation) //in bits
+
     let qualifier_field = hex2bin(data.substr(4,2))
 
     console.log("Group: "+group)
     console.log("Variation: "+variation)
     console.log("Qualifier Field: "+qualifier_field)
-    qualifier_field_parsed = parseQualifierField(qualifier_field)
+    let qualifier_field_parsed = parseQualifierField(qualifier_field)
 
-    let object_prefix = qualifier_field_parsed[0]
-    let range_field_contains = qualifier_field_parsed[1]
-    //check if we need to check for range specifier code
+    let object_prefix = qualifier_field_parsed.object_prefix
+    let range_field_contains = qualifier_field_parsed.range_field_contains
+    let range=0
+    if (range_field_contains.size!=0){
+        let range_size = range_field_contains.size //in octets
+        if (range_field_contains.type=="count"){
+            console.log(data.substr(6,range_size*2))
+            range = hex2int(MSBLSBSwap(data.substr(6,range_size*2)))
+        } else if (range_field_contains.type="start/stop"){
+            let start = hex2int(MSBLSBSwap(data.substr(6,range_size*2)))
+            let stop = hex2int(MSBLSBSwap(data.substr(6+range_size*2,range_size*2)))
+            range = stop - start + 1
+        }
+    }
+    console.log("Range: "+range)
+    return {group:group,variation:variation,object_size:object_size,object_prefix:object_prefix,range_field_contains:range_field_contains,range:range}
 }
+
 
 function parseObjects(data){
 
 }
 
-//test data
-//05640bc4430800008b86c9cb013c02062cff
 function main(input){
     if (validateData(input)){
         let data_link_layer = input.substr(0,20)
