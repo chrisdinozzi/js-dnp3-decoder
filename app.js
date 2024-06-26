@@ -240,6 +240,8 @@ function parseDataChunks(data,dir){
 
     let parsed_application_header = parseApplicationHeader(application_header)
     console.log(parsed_application_header)
+
+    //TODO: there may be multiple objects in a packet, how can i figure that out?
     let parsed_object_header = parseObjectHeader(object_header)
     console.log(parsed_object_header)
     let dnp3_objects = parseDNP3Objects(parsed_object_header, clean_data,dir)
@@ -254,8 +256,9 @@ function parseDNP3Objects(parsed_object_header,clean_data,dir){
     let range = parsed_object_header.range
     let object_size = parsed_object_header.object_size
     let data_size = (object_size * range)/8
-    console.log(data_size)
+    let prefix_size = parsed_object_header.object_prefix.size //in octets
     let start_offset=parsed_object_header.data_start_offset
+
     if (dir==1){//From Master
         start_offset += 6
         console.log("Start Offset: "+start_offset)
@@ -267,9 +270,16 @@ function parseDNP3Objects(parsed_object_header,clean_data,dir){
     let object_data=[]
 
     let offset=start_offset
+    let index=-1
+    let object_value=""
+    let chunk=""
     console.log("Offset: "+offset)
     for (let i=0;i<range;i++){
-        object_data.push(clean_data.substr(offset,object_size/4))
+        index = hex2int(MSBLSBSwap(clean_data.substr(offset,prefix_size*2)))
+        offset+=prefix_size*2
+        chunk = clean_data.substr(offset,object_size/4)
+        object_value = determineObjectValue(parsed_object_header.group,parsed_object_header.variation,chunk)
+        object_data.push({index:index, data:chunk,value:object_value})
         offset+=object_size/4
     }
     return object_data
@@ -790,9 +800,45 @@ function parseObjectHeader(data){
     return {group:group,variation:variation,object_size:object_size,object_prefix:object_prefix,range_field_contains:range_field_contains,range:range,data_start_offset:data_start_offset}
 }
 
+function determineObjectValue(group,variation,data){
+    switch (group){
+        case 1: //Group 1
+            switch (variation){
+                case 2:
+                    return parseGroup1Var2(data)
+            }
+        case 30: //Group 30
+            switch (variation){
+                case 2:
+                    return parseGroup30Var2(data)
+            }
+    }
+    console.log("PANIC")
+}
 
-function parseObjects(data){
+//these functions should return objects that contain:
+//group
+//variation
+//value (may be an object)
 
+
+function parseGroup1Var2(data){
+    let group=1
+    let variation=2
+    data = hex2int(data)
+    value={point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0}
+    if (data&1){ value.online=1}
+    if (data&2){ value.restart=1}
+    if (data&4){value.comm_failure=1}
+    if (data&8){value.remote_force=1}
+    if (data&16){ value.local_force=1}
+    if (data&32){ value.chatter_filter=1}
+    if (data&128){ value.point_value=1}
+    return {group:group,variation:variation,value:value}
+}
+
+function parseGroup30Var2(data){
+    return ""
 }
 
 function main(input){
