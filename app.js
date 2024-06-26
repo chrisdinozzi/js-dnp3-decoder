@@ -226,25 +226,53 @@ function cleanCRC(data){
 
 function parseDataChunks(data,dir){
     let clean_data = cleanCRC(data)
-    //is this comms from an outstation or a master?
     let application_header=""
-    let first_object_header=""
+    let object_header=""
 
     if (dir==1){ //From Master
         application_header = clean_data.substr(2,4)
-        first_object_header = clean_data.substr(6)
+        object_header = clean_data.substr(6)
     } else if (dir==0){ //From Outstation
         //will include an extra 2 bytes for Internal Indications
         application_header = clean_data.substr(2,8)
-        first_object_header = clean_data.substr(10)
+        object_header = clean_data.substr(10)
     }
 
     let parsed_application_header = parseApplicationHeader(application_header)
     console.log(parsed_application_header)
-    let parsed_first_object_header = parseFirstObjectHeader(first_object_header)
+    let parsed_object_header = parseObjectHeader(object_header)
+    console.log(parsed_object_header)
+    let dnp3_objects = parseDNP3Objects(parsed_object_header, clean_data,dir)
+    console.log(dnp3_objects)
 
-    return {application_header:parsed_application_header,first_object_header:parsed_first_object_header,dnp3_objects:dnp3_objects}
 
+    return {application_header:parsed_application_header,object_header:parsed_object_header,dnp3_objects:dnp3_objects}
+
+}
+
+function parseDNP3Objects(parsed_object_header,clean_data,dir){
+    let range = parsed_object_header.range
+    let object_size = parsed_object_header.object_size
+    let data_size = (object_size * range)/8
+    console.log(data_size)
+    let start_offset=parsed_object_header.data_start_offset
+    if (dir==1){//From Master
+        start_offset += 6
+        console.log("Start Offset: "+start_offset)
+    } else if (dir==0){//From Outstation
+        start_offset += 10
+        console.log("Start Offset: "+start_offset)
+    }
+
+    let object_data=[]
+
+    let offset=start_offset
+    console.log("Offset: "+offset)
+    for (let i=0;i<range;i++){
+        object_data.push(clean_data.substr(offset,object_size/4))
+        offset+=object_size/4
+    }
+    return object_data
 }
 
 function parseFunctionCode(function_code){
@@ -727,12 +755,11 @@ function calculateObjectSize(group,variation){
     return 0
 }
 
-function parseFirstObjectHeader(data){
+function parseObjectHeader(data){
     console.log("First Object Header: "+data)
     let group = hex2int(data.substr(0,2))
     let variation = hex2int(data.substr(2,2))
 
-    //TODO: Calculate object size
     let object_size=calculateObjectSize(group,variation) //in bits
 
     let qualifier_field = hex2bin(data.substr(4,2))
@@ -745,19 +772,22 @@ function parseFirstObjectHeader(data){
     let object_prefix = qualifier_field_parsed.object_prefix
     let range_field_contains = qualifier_field_parsed.range_field_contains
     let range=0
+    let data_start_offset=-1
     if (range_field_contains.size!=0){
         let range_size = range_field_contains.size //in octets
         if (range_field_contains.type=="count"){
             console.log(data.substr(6,range_size*2))
             range = hex2int(MSBLSBSwap(data.substr(6,range_size*2)))
+            data_start_offset=6+range_size*2
         } else if (range_field_contains.type="start/stop"){
             let start = hex2int(MSBLSBSwap(data.substr(6,range_size*2)))
             let stop = hex2int(MSBLSBSwap(data.substr(6+range_size*2,range_size*2)))
             range = stop - start + 1
+            data_start_offset=6+range_size*4
         }
     }
-    console.log("Range: "+range)
-    return {group:group,variation:variation,object_size:object_size,object_prefix:object_prefix,range_field_contains:range_field_contains,range:range}
+    console.log("data_start_offset: "+data_start_offset)
+    return {group:group,variation:variation,object_size:object_size,object_prefix:object_prefix,range_field_contains:range_field_contains,range:range,data_start_offset:data_start_offset}
 }
 
 
