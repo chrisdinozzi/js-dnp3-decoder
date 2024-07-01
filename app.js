@@ -104,6 +104,22 @@ function calculateCRC(data){
     return (~crc & 0xFFFF).toString(16) /* this is 16 bit CRC */
 }
 
+function cleanCRC(data){
+    let clean_data=""
+    //TODO: validate the crc before taking it off the end take off the end
+    if (data.length < 18){
+        //one small chunk
+        clean_data = data.substring(0,data.length-4)
+    } else{
+        data = data.match(/.{1,36}/g);
+        //console.log(data)
+        data.forEach(function (block) {
+            clean_data+=block.substring(0,block.length-4)
+        })
+    }
+    return clean_data
+}
+
 function validateData(data){
     //Check starting bytes
     if (data.substr(0,4) != "0564"){
@@ -125,25 +141,17 @@ function validateData(data){
     return true
 }
 
+function calculateTime(time){
+    time = time.match(/.{1,2}/g)
+    time.reverse()
+    time = time.join('')
+    time = hex2int(time)
+    return new Date(time)
+}
+
 ////////////
 //PARSING//
 ///////////
-function parseDataLinkLayer(data){
-    let length = hex2int(data.substr(4,2))
-    let control_octet = data.substr(6,2)
-    let destination = hex2int(MSBLSBSwap(data.substr(8,4)))
-    let source = hex2int(MSBLSBSwap(data.substr(12,4)))
-    let crc = MSBLSBSwap(data.substr(16,4))
-
-    // console.log("Length: "+length)
-    // console.log("Control Octet: "+control_octet)
-    // console.log("Destination: "+destination)
-    // console.log("Source: "+source)
-    // console.log("CRC: "+crc)
-    let control_octet_parsed = parseControlOctet(control_octet);
-    return {length:length,destination:destination,source:source,crc:crc,control_octet:control_octet_parsed}
-}
-
 function parseControlOctet(control_octet){
     let data_bin = hex2bin(control_octet)
     let dir=data_bin.substr(0,1)
@@ -192,11 +200,27 @@ function parseControlOctet(control_octet){
                 break;
         }
     }else {
-        console.log("WHY IS THE PRM NOT 0 OR 1?????????????????????????????????????????? panic panic scream panic")
+        //console.log("WHY IS THE PRM NOT 0 OR 1?????????????????????????????????????????? panic panic scream panic")
     }
 
     return {dir:dir,prm:prm,fcb:fcb,fcv:fcv,function_code:function_code,function_code_name:function_code_name}
 
+}
+
+function parseDataLinkLayer(data){
+    let length = hex2int(data.substr(4,2))
+    let control_octet = data.substr(6,2)
+    let destination = hex2int(MSBLSBSwap(data.substr(8,4)))
+    let source = hex2int(MSBLSBSwap(data.substr(12,4)))
+    let crc = MSBLSBSwap(data.substr(16,4))
+
+    // console.log("Length: "+length)
+    // console.log("Control Octet: "+control_octet)
+    // console.log("Destination: "+destination)
+    // console.log("Source: "+source)
+    // console.log("CRC: "+crc)
+    let control_octet_parsed = parseControlOctet(control_octet);
+    return {length:length,destination:destination,source:source,crc:crc,control_octet:control_octet_parsed}
 }
 
 function parseTransportControl(data){
@@ -208,63 +232,18 @@ function parseTransportControl(data){
     return {fin:fin,fir:fir,seq:seq}
 }
 
-function cleanCRC(data){
-    let clean_data=""
-    //TODO: validate the crc then take off the end
-    if (data.length < 18){
-        //one small chunk
-        clean_data = data.substring(0,data.length-4)
-    } else{
-        data = data.match(/.{1,36}/g);
-        //console.log(data)
-        data.forEach(function (block) {
-            clean_data+=block.substring(0,block.length-4)
-        })
-    }
-    return clean_data
-}
-
-function parseDataChunks(data,dir){
-    let clean_data = cleanCRC(data)
-    let application_header=""
-    let object_header=""
-
-    if (dir==1){ //From Master
-        application_header = clean_data.substr(2,4)
-        object_header = clean_data.substr(6)
-    } else if (dir==0){ //From Outstation
-        //will include an extra 2 bytes for Internal Indications
-        application_header = clean_data.substr(2,8)
-        object_header = clean_data.substr(10)
-    }
-
-    let parsed_application_header = parseApplicationHeader(application_header)
-    console.log(parsed_application_header)
-
-    //TODO: there may be multiple objects in a packet, how can i figure that out?
-    let parsed_object_header = parseObjectHeader(object_header)
-    console.log(parsed_object_header)
-    let dnp3_objects = parseDNP3Objects(parsed_object_header, clean_data,dir)
-    console.log(dnp3_objects)
-
-
-    return {application_header:parsed_application_header,object_header:parsed_object_header,dnp3_objects:dnp3_objects}
-
-}
-
 function parseDNP3Objects(parsed_object_header,clean_data,dir){
     let range = parsed_object_header.range
     let object_size = parsed_object_header.object_size
-    let data_size = (object_size * range)/8
     let prefix_size = parsed_object_header.object_prefix.size //in octets
     let start_offset=parsed_object_header.data_start_offset
 
     if (dir==1){//From Master
         start_offset += 6
-        console.log("Start Offset: "+start_offset)
+        //console.log("Start Offset: "+start_offset)
     } else if (dir==0){//From Outstation
         start_offset += 10
-        console.log("Start Offset: "+start_offset)
+        //console.log("Start Offset: "+start_offset)
     }
 
     let object_data=[]
@@ -273,293 +252,17 @@ function parseDNP3Objects(parsed_object_header,clean_data,dir){
     let index=-1
     let object_value=""
     let chunk=""
-    console.log("Offset: "+offset)
+    //console.log("Offset: "+offset)
+    //maybe need to add a check here so make sure range isnt 0? or maybe my code is smart enough to handle that properly :^)
     for (let i=0;i<range;i++){
         index = hex2int(MSBLSBSwap(clean_data.substr(offset,prefix_size*2)))
         offset+=prefix_size*2
         chunk = clean_data.substr(offset,object_size/4)
         object_value = determineObjectValue(parsed_object_header.group,parsed_object_header.variation,chunk)
-        object_data.push({index:index, data:chunk,value:object_value})
+        object_data.push({index:index, data:chunk,object:object_value})
         offset+=object_size/4
     }
     return object_data
-}
-
-function parseFunctionCode(function_code){
-    switch (function_code) {
-        case "00":
-            return "CONFIRM"
-        case "01":
-            return "READ"
-        case "02":
-            return "WRITE"
-        case "03":
-            return "SELECT"
-            
-        case "04":
-            return "OPERATE"
-            
-        case "05":
-            return "DIRECT_OPERATE"
-            
-        case "06":
-            return "DIRECT_OPERATE_NR"
-            
-        case "07":
-            return "IMMED_FREEZE"
-            
-        case "08":
-            return "IMMED_FREEZE_NR"
-            
-        case "09":
-            return "FREEZE_CLEAR"
-            
-        case "0A":
-            return "FREEZE_CLEAR_NR"
-            
-        case "0B":
-            return "FREEZE_AT_TIME"
-            
-        case "0C":
-            return "FREEZE_AT_TIME_NR"
-            
-        case "0D":
-            return "COLD_RESTART"
-            
-        case "0E":
-            return "WARM_RESTART"
-        case "0F":
-            return "INITIALIZE_DATA"
-        case "10":
-            return "INITIALIZE_APPL"
-        case "11":
-            return "START_APPL"
-        case "12":
-            return "STOP_APPL"
-        case "13":
-            return "SAVE_CONFIG"
-        case "14":
-            return "ENABLE_UNSOLICITED"
-        case "15":
-            return "DISABLE_UNSOLICITED"
-        case "16":
-            return "ASSIGN_CLASS"
-        case "17":
-            return "DELAY_MEASURE"
-        case "18":
-            return "RECORD_CURRENT_TIME"
-        case "19":
-            return "OPEN_FILE"
-        case "1a":
-            return "CLOSE_FILE"
-        case "1b":
-            return "DELETE_FILE"
-        case "1c":
-            return "GET_FILE_INFO"
-        case "1d":
-            return "AUTHENTICATE_FILE"
-        case "1e":
-            return "ABORT_FILE"
-        case "1f":
-            return "ACTIVATE_CONFIG"
-        case "20":
-            return "AUTHENTICATE_REQ"
-        case "21":
-            return "AUTH_REQ_NO_ACK"
-        case "81":
-            return "RESPONSE"
-        case "82":
-            return "UNSOLICITED_RESPONSE"
-        case "83":
-            return "AUTHENTICATE_RESP"
-    }
-}
-
-function parseApplicationHeader(data){
-    //Application Control
-    let application_control = data.substr(0,2)
-    application_control = hex2bin(application_control)
-    let fir = application_control.substr(0,1)
-    let fin = application_control.substr(1,1)
-    let con = application_control.substr(2,1)
-    let uns = application_control.substr(3,1)
-    let seq = bin2int(application_control.substr(4))
-    application_control = {fir:fir,fin:fin,con:con,uns:uns,seq:seq}
-
-    //Function Code
-    let function_code = data.substr(2,2)
-    let function_code_name = parseFunctionCode(function_code)
-    
-    //Internal Indicators
-    if (data.length==8){//From Outstation
-        //do interal indicators too
-        let iin = MSBLSBSwap(data.substr(4,4))
-        let msb_iin=hex2bin(iin.substr(0,2))
-        let lsb_iin=hex2bin(iin.substr(2,2))
-
-        //-1 = no iin
-        msb_iin = msb_iin.split("").reverse().join("").search('1')
-        lsb_iin = lsb_iin.split("").reverse().join("").search('1')
-        
-        let msb_iin_message=""
-        switch(msb_iin){
-            case 0:
-                msb_iin_message="Function Code Not Supported"
-                break;
-            case 1:
-                msb_iin_message="Requested Object Unknown"
-                break;
-            case 2:
-                msb_iin_message="Parameter Error"
-                break;
-            case 3:
-                msb_iin_message="Event Buffer Overflow"
-                break;
-            case 4:
-                msb_iin_message="Already Executing"
-                break;
-            case 5:
-                msb_iin_message="Configuration Corrupt"
-                break;
-            case 6:
-                msb_iin_message="Reserved"
-                break;
-            case 7:
-                msb_iin_message="Reserved"
-                break;
-            case -1:
-                msb_iin_message="No MSB IIN Message"
-                break;
-            default:
-                msb_iin_message="MSB IIN Meesage Broken!!!!!!!!!!!!!!!!!"
-                break;
-        }
-
-        let lsb_iin_message=""
-        switch(lsb_iin){
-            case 0:
-                lsb_iin_message="All Stations"
-                break;
-            case 1:
-                lsb_iin_message="Class 1 Data Available"
-                break;
-            case 2:
-                lsb_iin_message="Class 2 Data Available"
-                break;
-            case 3:
-                lsb_iin_message="Class 3 Data Available"
-                break;
-            case 4:
-                lsb_iin_message="Need Time"
-                break;
-            case 5:
-                lsb_iin_message="Local Control"
-                break;
-            case 6:
-                lsb_iin_message="Device Trouble"
-                break;
-            case 7:
-                lsb_iin_message="Device Restart"
-                break;
-            case -1:
-                lsb_iin_message="No LSB IIN Message"
-                break;
-            default:
-                lsb_iin_message="UUUUUH LSB MACHINE BROKE"
-                break;
-        }
-        return {application_control:application_control,function_code:function_code_name,msb_iin:msb_iin_message,lsb_iin:lsb_iin_message}
-    }
-    return {application_control:application_control,function_code:function_code_name}
-}
-
-function parseQualifierField(qf){
-    let object_prefix_code = bin2int(qf.substr(1,3))
-    let range_specifier_code = bin2hex(qf.substr(4))
-    console.log("Object Prefix Code: "+object_prefix_code)
-    console.log("Range Specifier Code: "+range_specifier_code)
-
-    let object_prefix={size:-1,type:""} 
-    switch (object_prefix_code){
-        case 0:
-            object_prefix={size:0,type:""}
-            break;
-        case 1:
-            object_prefix={size:1,type:"Index"}
-            break;
-        case 2:
-            object_prefix={size:2,type:"Index"}
-            break;
-        case 3:
-            object_prefix={size:4,type:"Index"}
-            break;
-        case 4:
-            object_prefix={size:1,type:"Object Size"}
-            break;
-        case 5:
-            object_prefix={size:2,type:"Object Size"}
-            break;
-        case 6:
-            object_prefix={size:4,type:"Object Size"}
-            break;
-        case 7:
-            object_prefix={size:-1,type:"Reserved"}
-            break;
-    }
-
-    let range_field_contains={size:-1,type:""} //Either Start/Stop or Count
-    switch(range_specifier_code){
-        case "0":
-            range_field_contains={size:1,type:"start/stop"}
-            break;
-        case "1":
-            range_field_contains={size:2,type:"start/stop"}
-            break;
-        case "2":
-            range_field_contains={size:4,type:"start/stop"}
-            break;
-        case "3":
-            range_field_contains={size:1,type:"start/stop virtual"}
-            break;
-        case "4":
-            range_field_contains={size:2,type:"start/stop virtual"}
-            break;
-        case "5":
-            range_field_contains={size:4,type:"start/stop virtual"}
-            break;
-        case "6":
-            range_field_contains={size:0,type:"No Range Field"}
-            break;
-        case "7":
-            range_field_contains={size:1,type:"count"}
-            break;
-        case "8":
-            range_field_contains={size:2,type:"count"}
-            break;
-        case "9":
-            range_field_contains={size:4,type:"count"}
-            break;
-        case "A":
-            range_field_contains={size:-1,type:"Reserved"}
-            break;
-        case "B":
-            range_field_contains={size:1,type:"count (variable)"}
-            break;
-        case "C":
-            range_field_contains={size:-1,type:"Reserved"}
-            break;
-        case "D":
-            range_field_contains={size:-1,type:"Reserved"}
-            break;
-        case "E":
-            range_field_contains={size:-1,type:"Reserved"}
-            break;
-        case "F":
-            range_field_contains={size:-1,type:"Reserved"}
-            break;
-    }
-
-    return {object_prefix:object_prefix,range_field_contains:range_field_contains}
 }
 
 function calculateObjectSize(group,variation){
@@ -765,8 +468,97 @@ function calculateObjectSize(group,variation){
     return 0
 }
 
+function parseQualifierField(qf){
+    let object_prefix_code = bin2int(qf.substr(1,3))
+    let range_specifier_code = bin2hex(qf.substr(4))
+    //console.log("Object Prefix Code: "+object_prefix_code)
+    //console.log("Range Specifier Code: "+range_specifier_code)
+
+    let object_prefix={size:-1,type:""} 
+    switch (object_prefix_code){
+        case 0:
+            object_prefix={size:0,type:""}
+            break;
+        case 1:
+            object_prefix={size:1,type:"Index"}
+            break;
+        case 2:
+            object_prefix={size:2,type:"Index"}
+            break;
+        case 3:
+            object_prefix={size:4,type:"Index"}
+            break;
+        case 4:
+            object_prefix={size:1,type:"Object Size"}
+            break;
+        case 5:
+            object_prefix={size:2,type:"Object Size"}
+            break;
+        case 6:
+            object_prefix={size:4,type:"Object Size"}
+            break;
+        case 7:
+            object_prefix={size:-1,type:"Reserved"}
+            break;
+    }
+
+    let range_field_contains={size:-1,type:""} //Either Start/Stop or Count
+    switch(range_specifier_code){
+        case "0":
+            range_field_contains={size:1,type:"start/stop"}
+            break;
+        case "1":
+            range_field_contains={size:2,type:"start/stop"}
+            break;
+        case "2":
+            range_field_contains={size:4,type:"start/stop"}
+            break;
+        case "3":
+            range_field_contains={size:1,type:"start/stop virtual"}
+            break;
+        case "4":
+            range_field_contains={size:2,type:"start/stop virtual"}
+            break;
+        case "5":
+            range_field_contains={size:4,type:"start/stop virtual"}
+            break;
+        case "6":
+            range_field_contains={size:0,type:"No Range Field"}
+            break;
+        case "7":
+            range_field_contains={size:1,type:"count"}
+            break;
+        case "8":
+            range_field_contains={size:2,type:"count"}
+            break;
+        case "9":
+            range_field_contains={size:4,type:"count"}
+            break;
+        case "A":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "B":
+            range_field_contains={size:1,type:"count (variable)"}
+            break;
+        case "C":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "D":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "E":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+        case "F":
+            range_field_contains={size:-1,type:"Reserved"}
+            break;
+    }
+
+    return {object_prefix:object_prefix,range_field_contains:range_field_contains}
+}
+
 function parseObjectHeader(data){
-    console.log("First Object Header: "+data)
+    //console.log("First Object Header: "+data)
     let group = hex2int(data.substr(0,2))
     let variation = hex2int(data.substr(2,2))
 
@@ -774,9 +566,9 @@ function parseObjectHeader(data){
 
     let qualifier_field = hex2bin(data.substr(4,2))
 
-    console.log("Group: "+group)
-    console.log("Variation: "+variation)
-    console.log("Qualifier Field: "+qualifier_field)
+    //console.log("Group: "+group)
+    //console.log("Variation: "+variation)
+    //console.log("Qualifier Field: "+qualifier_field)
     let qualifier_field_parsed = parseQualifierField(qualifier_field)
 
     let object_prefix = qualifier_field_parsed.object_prefix
@@ -786,7 +578,7 @@ function parseObjectHeader(data){
     if (range_field_contains.size!=0){
         let range_size = range_field_contains.size //in octets
         if (range_field_contains.type=="count"){
-            console.log(data.substr(6,range_size*2))
+            //console.log(data.substr(6,range_size*2))
             range = hex2int(MSBLSBSwap(data.substr(6,range_size*2)))
             data_start_offset=6+range_size*2
         } else if (range_field_contains.type="start/stop"){
@@ -796,8 +588,223 @@ function parseObjectHeader(data){
             data_start_offset=6+range_size*4
         }
     }
-    console.log("data_start_offset: "+data_start_offset)
+    //console.log("data_start_offset: "+data_start_offset)
     return {group:group,variation:variation,object_size:object_size,object_prefix:object_prefix,range_field_contains:range_field_contains,range:range,data_start_offset:data_start_offset}
+}
+
+function parseFunctionCode(function_code){
+    switch (function_code) {
+        case "00":
+            return "CONFIRM"
+        case "01":
+            return "READ"
+        case "02":
+            return "WRITE"
+        case "03":
+            return "SELECT"
+            
+        case "04":
+            return "OPERATE"
+            
+        case "05":
+            return "DIRECT_OPERATE"
+            
+        case "06":
+            return "DIRECT_OPERATE_NR"
+            
+        case "07":
+            return "IMMED_FREEZE"
+            
+        case "08":
+            return "IMMED_FREEZE_NR"
+            
+        case "09":
+            return "FREEZE_CLEAR"
+            
+        case "0A":
+            return "FREEZE_CLEAR_NR"
+            
+        case "0B":
+            return "FREEZE_AT_TIME"
+            
+        case "0C":
+            return "FREEZE_AT_TIME_NR"
+            
+        case "0D":
+            return "COLD_RESTART"
+            
+        case "0E":
+            return "WARM_RESTART"
+        case "0F":
+            return "INITIALIZE_DATA"
+        case "10":
+            return "INITIALIZE_APPL"
+        case "11":
+            return "START_APPL"
+        case "12":
+            return "STOP_APPL"
+        case "13":
+            return "SAVE_CONFIG"
+        case "14":
+            return "ENABLE_UNSOLICITED"
+        case "15":
+            return "DISABLE_UNSOLICITED"
+        case "16":
+            return "ASSIGN_CLASS"
+        case "17":
+            return "DELAY_MEASURE"
+        case "18":
+            return "RECORD_CURRENT_TIME"
+        case "19":
+            return "OPEN_FILE"
+        case "1a":
+            return "CLOSE_FILE"
+        case "1b":
+            return "DELETE_FILE"
+        case "1c":
+            return "GET_FILE_INFO"
+        case "1d":
+            return "AUTHENTICATE_FILE"
+        case "1e":
+            return "ABORT_FILE"
+        case "1f":
+            return "ACTIVATE_CONFIG"
+        case "20":
+            return "AUTHENTICATE_REQ"
+        case "21":
+            return "AUTH_REQ_NO_ACK"
+        case "81":
+            return "RESPONSE"
+        case "82":
+            return "UNSOLICITED_RESPONSE"
+        case "83":
+            return "AUTHENTICATE_RESP"
+    }
+}
+
+function parseApplicationHeader(data){
+    //Application Control
+    let application_control = data.substr(0,2)
+    application_control = hex2bin(application_control)
+    let fir = application_control.substr(0,1)
+    let fin = application_control.substr(1,1)
+    let con = application_control.substr(2,1)
+    let uns = application_control.substr(3,1)
+    let seq = bin2int(application_control.substr(4))
+    application_control = {fir:fir,fin:fin,con:con,uns:uns,seq:seq}
+
+    //Function Code
+    let function_code = data.substr(2,2)
+    let function_code_name = parseFunctionCode(function_code)
+    
+    //Internal Indicators
+    if (data.length==8){//From Outstation
+        //do interal indicators too
+        let iin = MSBLSBSwap(data.substr(4,4))
+        let msb_iin=hex2bin(iin.substr(0,2))
+        let lsb_iin=hex2bin(iin.substr(2,2))
+
+        //-1 = no iin
+        msb_iin = msb_iin.split("").reverse().join("").search('1')
+        lsb_iin = lsb_iin.split("").reverse().join("").search('1')
+        
+        let msb_iin_message=""
+        switch(msb_iin){
+            case 0:
+                msb_iin_message="Function Code Not Supported"
+                break;
+            case 1:
+                msb_iin_message="Requested Object Unknown"
+                break;
+            case 2:
+                msb_iin_message="Parameter Error"
+                break;
+            case 3:
+                msb_iin_message="Event Buffer Overflow"
+                break;
+            case 4:
+                msb_iin_message="Already Executing"
+                break;
+            case 5:
+                msb_iin_message="Configuration Corrupt"
+                break;
+            case 6:
+                msb_iin_message="Reserved"
+                break;
+            case 7:
+                msb_iin_message="Reserved"
+                break;
+            case -1:
+                msb_iin_message="No MSB IIN Message"
+                break;
+            default:
+                msb_iin_message="MSB IIN Meesage Broken!!!!!!!!!!!!!!!!!"
+                break;
+        }
+
+        let lsb_iin_message=""
+        switch(lsb_iin){
+            case 0:
+                lsb_iin_message="All Stations"
+                break;
+            case 1:
+                lsb_iin_message="Class 1 Data Available"
+                break;
+            case 2:
+                lsb_iin_message="Class 2 Data Available"
+                break;
+            case 3:
+                lsb_iin_message="Class 3 Data Available"
+                break;
+            case 4:
+                lsb_iin_message="Need Time"
+                break;
+            case 5:
+                lsb_iin_message="Local Control"
+                break;
+            case 6:
+                lsb_iin_message="Device Trouble"
+                break;
+            case 7:
+                lsb_iin_message="Device Restart"
+                break;
+            case -1:
+                lsb_iin_message="No LSB IIN Message"
+                break;
+            default:
+                lsb_iin_message="UUUUUH LSB MACHINE BROKE"
+                break;
+        }
+        return {application_control:application_control,function_code:function_code_name,msb_iin:msb_iin_message,lsb_iin:lsb_iin_message}
+    }
+    return {application_control:application_control,function_code:function_code_name}
+}
+
+function parseDataChunks(data,dir){
+    let clean_data = cleanCRC(data)
+    let application_header=""
+    let object_header=""
+
+    if (dir==1){ //From Master
+        application_header = clean_data.substr(2,4)
+        object_header = clean_data.substr(6)
+    } else if (dir==0){ //From Outstation
+        //will include an extra 2 bytes for Internal Indications
+        application_header = clean_data.substr(2,8)
+        object_header = clean_data.substr(10)
+    }
+
+    let parsed_application_header = parseApplicationHeader(application_header)
+    //console.log(parsed_application_header)
+
+    //TODO: there may be multiple objects in a packet, how can i figure that out?
+    let parsed_object_header = parseObjectHeader(object_header)
+    //console.log(parsed_object_header)
+    let dnp3_objects = parseDNP3Objects(parsed_object_header, clean_data,dir)
+    //console.log(dnp3_objects)
+
+
+    return {application_header:parsed_application_header,object_header:parsed_object_header,dnp3_objects:dnp3_objects}
 }
 
 function determineObjectValue(group,variation,data){
@@ -807,13 +814,23 @@ function determineObjectValue(group,variation,data){
                 case 2:
                     return parseGroup1Var2(data)
             }
+        case 2: //Group 2
+            switch (variation){
+                case 2:
+                    return parseGroup2Var2(data)
+            }
         case 30: //Group 30
             switch (variation){
                 case 2:
                     return parseGroup30Var2(data)
             }
+        case 60: //Group 60
+            switch (variation){
+                case 2:
+                    return parseGroup60Var2(data)
+            }
     }
-    console.log("PANIC")
+    //console.log("PANIC")
 }
 
 //these functions should return objects that contain:
@@ -821,10 +838,7 @@ function determineObjectValue(group,variation,data){
 //variation
 //value (may be an object)
 
-
 function parseGroup1Var2(data){
-    let group=1
-    let variation=2
     data = hex2int(data)
     value={point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0}
     if (data&1){ value.online=1}
@@ -834,11 +848,45 @@ function parseGroup1Var2(data){
     if (data&16){ value.local_force=1}
     if (data&32){ value.chatter_filter=1}
     if (data&128){ value.point_value=1}
-    return {group:group,variation:variation,value:value}
+    return value
+}
+
+function parseGroup2Var2(data){
+    let quality = data.substr(0,2)
+    let time = data.substr(2)
+
+    quality = hex2int(quality)
+    value={point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0,time:""}
+    if (quality&1){ value.online=1}
+    if (quality&2){ value.restart=1}
+    if (quality&4){value.comm_failure=1}
+    if (quality&8){value.remote_force=1}
+    if (quality&16){ value.local_force=1}
+    if (quality&32){ value.chatter_filter=1}
+    if (quality&128){ value.point_value=1}
+    value.time=calculateTime(time)
+    return value
 }
 
 function parseGroup30Var2(data){
-    return ""
+    let quality = data.substr(0,2)
+    let v = data.substr(2,4)
+    
+    value={reference_check:0,over_range:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0,value:v}
+    if (quality&1){value.online=1}
+    if (quality&2){value.restart=1}
+    if (quality&4){value.comm_failure=1}
+    if (quality&8){value.remote_force=1}
+    if (quality&16){value.local_force=1}
+    if (quality&32){value.over_range=1}
+    if (quality&64){value.reference_check=1}
+    value.v = hex2int(v)
+
+    return value
+}
+
+function parseGroup60Var2(data){
+
 }
 
 function main(input){
@@ -848,12 +896,17 @@ function main(input){
         let data_chunks = input.substr(20)
 
         let parsed_data_link_layer = parseDataLinkLayer(data_link_layer)
+        console.log("========DATA LINK LAYER========")
         console.log(parsed_data_link_layer)
 
         let parsed_transport_control = parseTransportControl(transport_control)
+        console.log("")
+        console.log("========TRANSPORT CONTROL========")
         console.log(parsed_transport_control)
 
         let parsed_data_chunks = parseDataChunks(data_chunks,parsed_data_link_layer.control_octet.dir)
+        console.log("")
+        console.log("========DATA========")
         console.log(parsed_data_chunks)
     } else{
         console.log("Data Invalid!")
