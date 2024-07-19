@@ -22,20 +22,22 @@
         </div>
         <div id="output-data-link">
             <h2>Data Link</h2>
-            <label>Data</label><input type="text" readonly id="data-link-data">
-            <br>
-            <label>Start: </label><input type="text" readonly id="start">
             <label>Length: </label><input type="text" readonly id="length">
             <br>
             <label>Direction: </label><input type="text" readonly id="direction">
             <label>Primary Message:</label><input type="text" readonly id="prm">
-            <label>Link Function Code: </label><input type="text" readonly id="link_function_code">
+            <label>Frame Count Bit:</label><input type="text" readonly id="fcb">
+            <label>Frame Count Valid:</label><input type="text" readonly id="fcv">
             <br>
-            <label>Destination: </label><input type="text" readonly id="destination">
+            <label>Link Function Code: </label><input type="text" readonly id="link_function_code">
+            <label>Link Function Name: </label><input type="text" readonly id="link_function_name">
+            <br>
             <label>Source: </label><input type="text" readonly id="source">
+            <label>Destination: </label><input type="text" readonly id="destination">
             <br>
             <label>CRC: </label><input type="text" readonly id="crc">
         </div>
+
         <div id="output-transport-layer">
             <h2>Transport Layer</h2>
             <label>Data</label><input type="text" readonly id="transport-layer-data">
@@ -44,6 +46,7 @@
             <label>FIR: </label><input type="text" readonly id="fir">
             <label>Sequence: </label><input type="text" readonly id="seq">
         </div>
+
         <div id="output-application-header">
             <h2>Applicaiton Header</h2>
             <label>Data</label><input type="text" readonly id="application-header-data">

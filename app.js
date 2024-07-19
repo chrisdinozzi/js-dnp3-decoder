@@ -797,6 +797,7 @@ function parseDataChunks(data,dir){
     let parsed_application_header = parseApplicationHeader(application_header)
     //console.log(parsed_application_header)
 
+    let offset=0
     //TODO: there may be multiple objects in a packet, how can i figure that out?
     let parsed_object_header = parseObjectHeader(object_header)
     //console.log(parsed_object_header)
@@ -889,6 +890,40 @@ function parseGroup60Var2(data){
 
 }
 
+////////////////
+//HTML UPDATES//
+////////////////
+function updateDataLinkLayer(data_link_layer){
+    let length = data_link_layer.length
+
+    let fcb = data_link_layer.control_octet.fcb
+    let fcv = data_link_layer.control_octet.fcv
+    let function_code = data_link_layer.control_octet.function_code
+    let function_code_name = data_link_layer.control_octet.function_code_name
+    let prm = data_link_layer.control_octet.prm
+    let destination = data_link_layer.destination
+    let source = data_link_layer.source
+    let crc = data_link_layer.crc
+
+    let direction_bit = data_link_layer.control_octet.dir
+    let direction=""
+    if (direction_bit==0){
+        direction = "From Outstation"
+    } else if (direction_bit==1){
+        direction = "From Master"
+    }
+    setOutput("length",length);
+    setOutput("direction",direction)
+    setOutput("fcb",fcb)
+    setOutput("fcv",fcv)
+    setOutput("prm",prm)
+    setOutput("link_function_code",function_code)
+    setOutput("link_function_name",function_code_name)
+    setOutput("source",source)
+    setOutput("destination",destination)
+    setOutput("crc",crc)
+}
+
 function main(input){
     if (validateData(input)){
         let data_link_layer = input.substr(0,20)
@@ -898,6 +933,7 @@ function main(input){
         let parsed_data_link_layer = parseDataLinkLayer(data_link_layer)
         console.log("========DATA LINK LAYER========")
         console.log(parsed_data_link_layer)
+        updateDataLinkLayer(parsed_data_link_layer)
 
         let parsed_transport_control = parseTransportControl(transport_control)
         console.log("")
