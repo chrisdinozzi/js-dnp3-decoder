@@ -924,6 +924,14 @@ function updateDataLinkLayer(data_link_layer){
     setOutput("crc",crc)
 }
 
+function updateTransportControl(transport_control){
+
+}
+
+function updateDataChunks(data_chunks){
+
+}
+
 function main(input){
     if (validateData(input)){
         let data_link_layer = input.substr(0,20)
@@ -939,11 +947,13 @@ function main(input){
         console.log("")
         console.log("========TRANSPORT CONTROL========")
         console.log(parsed_transport_control)
+        updateTransportControl(parsed_transport_control)
 
         let parsed_data_chunks = parseDataChunks(data_chunks,parsed_data_link_layer.control_octet.dir)
         console.log("")
         console.log("========DATA========")
         console.log(parsed_data_chunks)
+        updateDataChunks(parsed_data_chunks)
     } else{
         console.log("Data Invalid!")
     }
