@@ -895,7 +895,6 @@ function parseGroup60Var2(data){
 ////////////////
 function updateDataLinkLayer(data_link_layer){
     let length = data_link_layer.length
-
     let fcb = data_link_layer.control_octet.fcb
     let fcv = data_link_layer.control_octet.fcv
     let function_code = data_link_layer.control_octet.function_code
@@ -925,7 +924,13 @@ function updateDataLinkLayer(data_link_layer){
 }
 
 function updateTransportControl(transport_control){
+    let fin = transport_control.fin
+    let fir = transport_control.fir
+    let seq = transport_control.seq
 
+    setOutput("fin",fin)
+    setOutput("fir",fir)
+    setOutput("seq",seq)
 }
 
 function updateDataChunks(data_chunks){
