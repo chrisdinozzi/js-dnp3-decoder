@@ -2,9 +2,118 @@
     <head>
         <title>DNP3 Decoder</title>
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+            :root{
+                --background-color:#f5f3e7;
+                --primary-color:#e83f55;
+                --secondary-color:#272f41;
+                --accent-color: #e83f55;
+                --link-color:#e83f55;
+            }
+
+            html{
+                background-color:var(--background-color);
+                font-family: 'Roboto', sans-serif;
+                color:var(--secondary-color);
+                line-height: 1.5;
+                margin: 32px auto;
+                font-size: clamp(1rem, 2vw, 1.125rem);
+            }
+
+            body{
+                margin:0% 10% 0% 10%;
+                padding: 5% 5% 5% 5%;
+                padding: 16px;
+                max-width: 150ch;
+                margin: 0 auto;
+                text-align:left;
+            }
+
+            a{
+                color:var(--link-color);
+            }
+
+            nav{
+                overflow:auto;
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: space-evenly;
+            }
+
+            nav a{
+                text-decoration: none;
+                padding:2px 4px 2px 4px;
+            }
+
+            a:hover{
+                background-color: var(--primary-color);
+                color:var(--background-color)
+            }
+
             h1{
                 text-align: center;
             }
+
+            h1 a{
+                color:var(--secondary-color);
+                text-decoration: none;
+            }
+
+            h2{
+                background-color: var(--primary-color);
+                padding-left:6px;
+            }
+
+            h2,h3{
+                text-align: left;
+            }
+
+            h3{
+                text-decoration: underline;
+            }
+
+            p{
+                display: block;
+                margin-block-start: 1em;
+                margin-block-end: 1em;
+                margin-inline-start: 0px;
+                margin-inline-end: 0px;
+            }
+
+            img{
+                margin:auto;
+                display:block;
+                width:90%;
+            }
+
+            code{
+                /*word-wrap: break-word;*/
+                background-color:#c2c1b7;
+                padding: 8px;
+                display:block;
+                overflow-y:hidden;
+                overflow-x:scroll;
+
+                font-size: inherit;
+                
+            }
+
+            ol,
+            ul {
+                overflow-x: auto;
+                white-space: nowrap;
+                text-align:left;
+                padding-bottom: 32px;
+            }
+
+            footer{
+                display:block;
+            }
+            textarea{
+                width:100%;
+                resize:none;
+            }
+
         </style>
     </head>
     <body>
@@ -14,20 +123,19 @@
 
         0564e74400004308d75bf1a78102000202281800400101719e6c4e6d7c8f01420101719e6c7c8f01430101716b799e6c7c8f01440101729e6c7c8f01460115fd01729e6c7c8f01480101729e6c7c8f01c8b44a0101729e6c7c8f014c0101729e6c7cedb28f014e0101729e6c7c8f01500181729e48936c7c8f01510181729e6c7c8f015201819d74739e6c7c8f01530181739e6c7c8f0154df2c0181739e6c7c8f01550181739e6c7c8f9b4401560181739e6c7c8f01570181739e6cab4b7c8f01580101739e6c7c8f0159010173c35f9e6c7c8f015a0181739e6c7c8f015b01fb2a01739e6c7c8f015c0101739e6c7c8f0176eb5d0181739e6c7c8f014001814ea66c7cb62f8f017b3a
         <h1>DNP3 Decoder</h1>
+
         <div id="input">
             <h2>Input</h2>
-            <label>Input</label>
-            <br>
-            <textarea id="input_box" oninput="main(cleanInput(this.value))"></textarea>
+            <textarea placeholder="Type, or paste, hex formatted DNP3 here..." col="50" rows="20" id="input_box" oninput="main(cleanInput(this.value))"></textarea>
         </div>
         <div id="output-data-link">
             <h2>Data Link</h2>
             <label>Length: </label><input type="text" readonly id="length">
             <br>
             <label>Direction: </label><input type="text" readonly id="direction">
-            <label>Primary Message:</label><input type="text" readonly id="prm">
-            <label>Frame Count Bit:</label><input type="text" readonly id="fcb">
-            <label>Frame Count Valid:</label><input type="text" readonly id="fcv">
+            <label>Primary Message: </label><input type="text" readonly id="prm">
+            <label>Frame Count Bit: </label><input type="text" readonly id="fcb">
+            <label>Frame Count Valid: </label><input type="text" readonly id="fcv">
             <br>
             <label>Link Function Code: </label><input type="text" readonly id="link_function_code">
             <label>Link Function Name: </label><input type="text" readonly id="link_function_name">
@@ -47,7 +155,7 @@
 
         <div id="output-application-header">
             <h2>Applicaiton Header</h2>
-            <label>Data</label><input type="text" readonly id="application-header-data">
+            <label>Data: </label><input type="text" readonly id="application-header-data">
             <br>
             <label>Application Control: </label><input type="text" readonly id="application_control">
             <label>FIR: </label><input type="text" readonly id="application_control_fir">

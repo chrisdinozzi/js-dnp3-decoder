@@ -838,7 +838,6 @@ function determineObjectValue(group,variation,data){
 //group
 //variation
 //value (may be an object)
-
 function parseGroup1Var2(data){
     data = hex2int(data)
     value={point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0}
@@ -887,7 +886,7 @@ function parseGroup30Var2(data){
 }
 
 function parseGroup60Var2(data){
-
+//TODO
 }
 
 ////////////////
@@ -933,7 +932,30 @@ function updateTransportControl(transport_control){
     setOutput("seq",seq)
 }
 
-function updateDataChunks(data_chunks){
+
+function updateApplicationHedaer(application_header){
+    let con = application_header.application_control.con
+    let fin = application_header.application_control.fin
+    let fir = application_header.application_control.fir
+    let seq = application_header.application_control.seq
+    let uns = application_header.application_control.uns
+
+    let function_code = application_header.function_code
+
+    let lsb_iin = application_header.lsb_iin
+    let msb_iin = application_header.msb_iin
+
+    setOutput("application_control_con",con)
+    setOutput("application_control_fir",fir)
+    setOutput("application_control_fin",fin)
+    setOutput("application_control_uns",uns)
+    setOutput("application_control_seq",seq)
+
+    setOutput("app_function_code",function_code)
+
+    setOutput("internal_indications_lsb",lsb_iin)
+    setOutput("internal_indications_msb",msb_iin)
+
 
 }
 
@@ -958,6 +980,7 @@ function main(input){
         console.log("")
         console.log("========DATA========")
         console.log(parsed_data_chunks)
+        updateApplicationHedaer(parsed_data_chunks.application_header)
         updateDataChunks(parsed_data_chunks)
     } else{
         console.log("Data Invalid!")
