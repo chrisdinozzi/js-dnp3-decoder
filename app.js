@@ -775,7 +775,7 @@ function parseApplicationHeader(data){
                 lsb_iin_message="UUUUUH LSB MACHINE BROKE"
                 break;
         }
-        return {application_control:application_control,function_code:function_code_name,msb_iin:msb_iin_message,lsb_iin:lsb_iin_message}
+        return {application_control:application_control,function_code:function_code_name,msb_iin:msb_iin,msb_iin_message:msb_iin_message,lsb_iin:lsb_iin,lsb_iin_message:lsb_iin_message}
     }
     return {application_control:application_control,function_code:function_code_name}
 }
@@ -832,6 +832,9 @@ function determineObjectValue(group,variation,data){
             }
     }
     //console.log("PANIC")
+    console.log("[!!!] Group: "+group+", Var: "+variation+" is not supported. [!!!]")
+    console.log("[!!!] Group: "+group+", Var: "+variation+" is not supported. [!!!]")
+    console.log("[!!!] Group: "+group+", Var: "+variation+" is not supported. [!!!]")
 }
 
 //these functions should return objects that contain:
@@ -945,6 +948,9 @@ function updateApplicationHedaer(application_header){
     let lsb_iin = application_header.lsb_iin
     let msb_iin = application_header.msb_iin
 
+    let lsb_iin_message = application_header.lsb_iin_message
+    let msb_iin_message = application_header.msb_iin_message
+
     setOutput("application_control_con",con)
     setOutput("application_control_fir",fir)
     setOutput("application_control_fin",fin)
@@ -953,8 +959,67 @@ function updateApplicationHedaer(application_header){
 
     setOutput("app_function_code",function_code)
 
-    setOutput("internal_indications_lsb",lsb_iin)
-    setOutput("internal_indications_msb",msb_iin)
+    setOutput("internal_indications_lsb",lsb_iin_message)
+    setOutput("internal_indications_msb",msb_iin_message)
+
+    switch(lsb_iin){
+        case 0:
+            lsb_iin_message="All Stations"
+            setCheckbox("iin_lsb_all_stations",1)
+            break;
+        case 1:
+            setCheckbox("iin_lsb_class1",1)
+            break;
+        case 2:
+            setCheckbox("iin_lsb_class2",1)
+            break;
+        case 3:
+            setCheckbox("iin_lsb_class3",1)
+            break;
+        case 4:
+            setCheckbox("iin_lsb_need_time",1)
+            break;
+        case 5:
+            setCheckbox("iin_lsb_local_control",1)
+            break;
+        case 6:
+            setCheckbox("iin_lsb_device_trouble",1)
+            break;
+        case 7:
+            setCheckbox("iin_lsb_device_restart",1)
+            break;
+        default:
+            break;
+    }
+
+    switch(msb_iin){
+        case 0:
+            setCheckbox("iin_msb_function_code_not_supported",1)
+            break;
+        case 1:
+            setCheckbox("iin_msb_object_unknown",1)
+            break;
+        case 2:
+            setCheckbox("iin_msb_parameter_error",1)
+            break;
+        case 3:
+            setCheckbox("iin_msb_event_buffer_overflow",1)
+            break;
+        case 4:
+            setCheckbox("iin_msb_already_executing",1)
+            break;
+        case 5:
+            setCheckbox("iin_msb_configuration_corrupt",1)
+            break;
+        case 6:
+            setCheckbox("iin_msb_reserved1",1)
+            break;
+        case 7:
+            setCheckbox("iin_msb_reserved2",1)
+            break;
+        default:
+            break;
+    }
 
 
 }
@@ -981,7 +1046,7 @@ function main(input){
         console.log("========DATA========")
         console.log(parsed_data_chunks)
         updateApplicationHedaer(parsed_data_chunks.application_header)
-        updateDataChunks(parsed_data_chunks)
+        //updateDataChunks(parsed_data_chunks)
     } else{
         console.log("Data Invalid!")
     }

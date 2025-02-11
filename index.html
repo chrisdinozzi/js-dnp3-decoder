@@ -19,6 +19,10 @@
                 margin: 32px auto;
                 font-size: clamp(1rem, 2vw, 1.125rem);
             }
+            
+            input{
+                font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+            }
 
             body{
                 margin:0% 10% 0% 10%;
@@ -155,9 +159,6 @@
 
         <div id="output-application-header">
             <h2>Applicaiton Header</h2>
-            <label>Data: </label><input type="text" readonly id="application-header-data">
-            <br>
-            <label>Application Control: </label><input type="text" readonly id="application_control">
             <label>FIR: </label><input type="text" readonly id="application_control_fir">
             <label>FIN: </label><input type="text" readonly id="application_control_fin">
             <label>CON: </label><input type="text" readonly id="application_control_con">
@@ -166,7 +167,7 @@
             <br>
             <label>Application Function Code: </label><input type="text" readonly id="app_function_code">
             <br>
-            <label>Internal Indication (LSB): </label><input type="text" disabled id="internal_indications_lsb">
+            <br><label>Internal Indication (LSB): </label><input type="text" disabled id="internal_indications_lsb">
             <br><label>All Stations</label><input type="checkbox" disabled id = "iin_lsb_all_stations">
             <br><label>Class 1</label><input type="checkbox" disabled id = "iin_lsb_class1">
             <br><label>Class 2</label><input type="checkbox" disabled id = "iin_lsb_class2">
@@ -175,8 +176,8 @@
             <br><label>Local Control</label><input type="checkbox" disabled id = "iin_lsb_local_control">
             <br><label>Device Trouble</label><input type="checkbox" disabled id = "iin_lsb_device_trouble">
             <br><label>Device Restart</label><input type="checkbox" disabled id = "iin_lsb_device_restart">
-
-            <br><br><label>Internal Indication (MSB): </label><input type="text" disabled id="internal_indications_msb">
+            <br>
+            <br><label>Internal Indication (MSB): </label><input type="text" disabled id="internal_indications_msb">
             <br><label>Function code not supported</label><input type="checkbox" disabled id="iin_msb_function_code_not_supported">
             <br><label>Object Unknown</label><input type="checkbox" disabled id="iin_msb_object_unknown">
             <br><label>Parameter Error</label><input type="checkbox" disabled id="iin_msb_parameter_error">
