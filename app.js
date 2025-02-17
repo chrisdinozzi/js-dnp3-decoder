@@ -845,7 +845,7 @@ function determineObjectValue(group,variation,data){
 //value (may be an object)
 function parseGroup1Var2(data){
     data = hex2int(data)
-    value={point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0}
+    value={group:1,var:2,point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0}
     if (data&1){ value.online=1}
     if (data&2){ value.restart=1}
     if (data&4){value.comm_failure=1}
@@ -861,7 +861,7 @@ function parseGroup2Var2(data){
     let time = data.substr(2)
 
     quality = hex2int(quality)
-    value={point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0,time:""}
+    value={group:2,var:2,point_value:0,chatter_filter:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0,time:""}
     if (quality&1){ value.online=1}
     if (quality&2){ value.restart=1}
     if (quality&4){value.comm_failure=1}
@@ -877,7 +877,7 @@ function parseGroup30Var2(data){
     let quality = data.substr(0,2)
     let v = data.substr(2,4)
     
-    value={reference_check:0,over_range:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0,value:v}
+    value={group:30,var:2,reference_check:0,over_range:0,local_force:0,remote_force:0,comm_failure:0,restart:0,online:0,value:v}
     if (quality&1){value.online=1}
     if (quality&2){value.restart=1}
     if (quality&4){value.comm_failure=1}
@@ -891,7 +891,11 @@ function parseGroup30Var2(data){
 }
 
 function parseGroup60Var2(data){
-//TODO
+    //TODO
+}
+
+function parseGroup80Var1(data){
+    //TODO
 }
 
 ////////////////

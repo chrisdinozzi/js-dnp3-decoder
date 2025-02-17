@@ -6,4 +6,3 @@ This is still a WIP but the data link, and transport layers are functional.
  - Group 1 Var 2
  - Group 2 Var 2
  - Group 30 Var 2
- - Group 60 Var 2
