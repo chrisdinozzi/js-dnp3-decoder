@@ -3,6 +3,8 @@
 //https://www.winccoa.com/documentation/WinCCOA/latest/en_US/Treiber_DNP3/dnp3_application_layer.html
 //https://www.researchgate.net/figure/DNP3-message-architecture_fig1_308143053
 
+
+//TODO: Put this in a seperate JS file.
 /////////////////////
 //HELPER FUNCTIONS//
 ////////////////////
@@ -934,7 +936,6 @@ function updateTransportControl(transport_control){
     setOutput("fir",fir)
     setOutput("seq",seq)
 }
-
 
 function updateApplicationHedaer(application_header){
     let con = application_header.application_control.con
