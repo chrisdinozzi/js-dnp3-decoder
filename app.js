@@ -869,7 +869,7 @@ function parseGroup2Var2(data){
     if (quality&16){ value.local_force=1}
     if (quality&32){ value.chatter_filter=1}
     if (quality&128){ value.point_value=1}
-    value.time=calculateTime(time)
+    value.time=String(calculateTime(time))
     return value
 }
 
@@ -1029,6 +1029,88 @@ function updateApplicationHedaer(application_header){
 
 }
 
+function updateObjectHeader(object_header){
+    let group = object_header.group
+    let variation = object_header.variation
+    let object_prefix = object_header.object_prefix
+    let object_size = object_header.object_size
+    let range = object_header.range
+    let range_field_contains = object_header.range_field_contains
+
+    //TODO: Actually update the html lol
+
+}
+
+function updateGroup2Var2(dnp3_object){
+    //TODO
+    const output_area = document.getElementById("output-objects")
+    let index = dnp3_object.index
+    let point_value = dnp3_object.object.point_value
+    let reserved = dnp3_object.object.reserved
+    let chatter_filter = dnp3_object.object.chatter_filter
+    let local_force = dnp3_object.object.local_force
+    let remote_force = dnp3_object.object.remote_force
+    let comm_failure = dnp3_object.object.comm_failure
+    let restart = dnp3_object.object.restart
+    let online = dnp3_object.object.online
+    let timestamp = dnp3_object.object.time
+
+    //TOOD: FIx time stamping
+    let html=`
+            <div id="output-group2-var2-`+index+`">
+                <h2>Group 2 Var 2 - `+index+`</h2>
+                <label>Index: </label><input type="text" readonly id="index" value=`+index+`><br>
+                <label>Point Value: </label><input type="text" readonly id="point-value" value=`+point_value+`><br>
+                <label>Reserved: </label><input type="text" readonly id="reserved" value=`+reserved+`><br>
+                <label>Chatter Filter: </label><input type="text" readonly id="chatter-filter" value=`+chatter_filter+`><br>
+                <label>Local Force: </label><input type="text" readonly id="local-force" value=`+local_force+`><br>
+                <label>Remote Force: </label><input type="text" readonly id="remote-force" value=`+remote_force+`><br>
+                <label>Comm Fail: </label><input type="text" readonly id="comm-fail" value=`+comm_failure+`><br>
+                <label>Restart: </label><input type="text" readonly id="restart" value=`+restart+`><br>
+                <label>Online: </label><input type="text" readonly id="online" value=`+online+`><br>
+                <label>Timestamp: </label><input type="text" readonly id="timestamp" value=`+timestamp+`><br> 
+            </div>
+    `
+    console.log(timestamp)
+    console.log(index)
+    output_area.insertAdjacentHTML("afterend",html)
+}
+
+function updateDataChunks(parsed_data_chunks){
+    let object_header = parsed_data_chunks.object_header
+    updateObjectHeader(object_header)
+    parsed_data_chunks.dnp3_objects.forEach(dnp3_object =>{
+        let group = dnp3_object.object.group
+        let variation = dnp3_object.object.var
+        switch (group){
+            case 1: //Group 1
+                switch (variation){
+                    case 2:
+                        return updateGroup1Var2(dnp3_object)
+                }
+            case 2: //Group 2
+                switch (variation){
+                    case 2:
+                        return updateGroup2Var2(dnp3_object)
+                }
+            case 30: //Group 30
+                switch (variation){
+                    case 2:
+                        return updateGroup30Var2(dnp3_object)
+                }
+            case 60: //Group 60
+                switch (variation){
+                    case 2:
+                        return updateGroup60Var2(dnp3_object)
+                }
+        }
+    })
+}
+
+
+////////
+//MAIN//
+////////
 function main(input){
     if (validateData(input)){
         let data_link_layer = input.substr(0,20)
@@ -1051,7 +1133,7 @@ function main(input){
         console.log("========DATA========")
         console.log(parsed_data_chunks)
         updateApplicationHedaer(parsed_data_chunks.application_header)
-        //updateDataChunks(parsed_data_chunks)
+        updateDataChunks(parsed_data_chunks)
     } else{
         console.log("Data Invalid!")
     }
